@@ -1,0 +1,13 @@
+{
+  "_comment": "Authoritative store catalog. lib/config/store_config.dart must match ids, categories and costs; test/catalog_parity_test.dart enforces it.",
+  "items": {
+    "head_crown": { "category": "headpiece", "cost": 30 },
+    "head_halo": { "category": "headpiece", "cost": 20 },
+    "head_cap": { "category": "headpiece", "cost": 15 },
+    "shirt_tunic": { "category": "shirt", "cost": 25 },
+    "shirt_armor": { "category": "shirt", "cost": 50 },
+    "pants_joggers": { "category": "pants", "cost": 20 },
+    "companion_dove": { "category": "companion", "cost": 40 },
+    "companion_lamb": { "category": "companion", "cost": 60 }
+  }
+}

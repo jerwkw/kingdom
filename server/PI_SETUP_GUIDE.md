@@ -1,4 +1,8 @@
-# Raspberry Pi Setup & Deployment Guide — Kingdom Church App Server
+# Archived Raspberry Pi Setup & Deployment Guide
+
+> This deployment path is no longer supported. Kingdom now uses Firebase Cloud
+> Functions. This document is historical reference only; follow the root
+> `FIREBASE_DEPLOYMENT_GUIDE.md` for development and production.
 
 This guide walks through setting up your Node.js backend server on a Raspberry Pi to handle privileged game logic (reward transactions, building stats aggregation, and daily challenge generation) without needing a paid Cloud Functions setup or credit card.
 

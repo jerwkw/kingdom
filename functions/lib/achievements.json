@@ -1,0 +1,11 @@
+{
+  "_comment": "Authoritative guild achievement ids and fund thresholds. lib/config/achievements_config.dart holds display copy; test/catalog_parity_test.dart enforces the match.",
+  "achievements": [
+    { "id": "founded", "threshold": 0 },
+    { "id": "first_fish", "threshold": 10 },
+    { "id": "playground", "threshold": 50 },
+    { "id": "fountain", "threshold": 100 },
+    { "id": "sanctuary", "threshold": 250 },
+    { "id": "citadel", "threshold": 500 }
+  ]
+}

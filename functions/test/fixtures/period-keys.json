@@ -1,0 +1,19 @@
+{
+  "_comment": "Shared UTC period-key cases. Verified by functions/test/domain.test.js and test/period_keys_test.dart.",
+  "cases": [
+    { "instant": "2026-09-08T12:00:00Z", "daily": "2026-09-08", "weekly": "2026-W37", "monthly": "2026-09" },
+    { "instant": "2026-09-08T23:59:59Z", "daily": "2026-09-08", "weekly": "2026-W37", "monthly": "2026-09" },
+    { "instant": "2026-09-09T00:00:00Z", "daily": "2026-09-09", "weekly": "2026-W37", "monthly": "2026-09" },
+    { "instant": "2026-09-13T23:59:59Z", "daily": "2026-09-13", "weekly": "2026-W37", "monthly": "2026-09" },
+    { "instant": "2026-09-14T00:00:00Z", "daily": "2026-09-14", "weekly": "2026-W38", "monthly": "2026-09" },
+    { "instant": "2026-09-30T23:59:59Z", "daily": "2026-09-30", "weekly": "2026-W40", "monthly": "2026-09" },
+    { "instant": "2026-10-01T00:00:00Z", "daily": "2026-10-01", "weekly": "2026-W40", "monthly": "2026-10" },
+    { "instant": "2020-12-31T23:59:59Z", "daily": "2020-12-31", "weekly": "2020-W53", "monthly": "2020-12" },
+    { "instant": "2021-01-01T12:00:00Z", "daily": "2021-01-01", "weekly": "2020-W53", "monthly": "2021-01" },
+    { "instant": "2021-01-04T00:00:00Z", "daily": "2021-01-04", "weekly": "2021-W01", "monthly": "2021-01" },
+    { "instant": "2024-12-30T00:00:00Z", "daily": "2024-12-30", "weekly": "2025-W01", "monthly": "2024-12" },
+    { "instant": "2026-12-31T23:59:59Z", "daily": "2026-12-31", "weekly": "2026-W53", "monthly": "2026-12" },
+    { "instant": "2027-01-01T00:00:00Z", "daily": "2027-01-01", "weekly": "2026-W53", "monthly": "2027-01" },
+    { "instant": "2027-01-04T00:00:00Z", "daily": "2027-01-04", "weekly": "2027-W01", "monthly": "2027-01" }
+  ]
+}

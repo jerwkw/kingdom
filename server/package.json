@@ -1,7 +1,7 @@
 {
   "name": "kingdom-pi-server",
   "version": "1.0.0",
-  "description": "Raspberry Pi backend server for Kingdom Church App",
+  "description": "Archived Raspberry Pi backend; production uses Firebase Cloud Functions",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",

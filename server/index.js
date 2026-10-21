@@ -6,6 +6,11 @@ const cron = require('node-cron');
 const fs = require('fs');
 const path = require('path');
 
+if (process.env.ENABLE_LEGACY_PI_SERVER !== 'true') {
+  console.error('The Raspberry Pi backend is archived. Use Firebase Cloud Functions.');
+  process.exit(1);
+}
+
 dotenv.config();
 
 // Initialize Firebase Admin SDK
@@ -48,39 +53,19 @@ async function authenticateToken(req, res, next) {
 }
 
 // -----------------------------------------------------------------------------
-// Role-specific completion messages map (modular & clean)
+// Encouraging completion messages map
 // -----------------------------------------------------------------------------
-const ROLE_MESSAGES = {
-  gardener: [
-    "You watered another seed today 🌱",
-    "Roots growing deeper. Keep nurturing your spirit!",
-    "A faithful harvest begins with daily care."
-  ],
-  electrician: [
-    "Circuit charged. God's power is flowing through you ⚡",
-    "Light connected. Shining brightly today!",
-    "High voltage spiritual energy restored."
-  ],
-  cleaner: [
-    "Heart refreshed and clean ✨",
-    "Sweeping away distraction, fixing focus on Him.",
-    "A pure heart creates space for peaceful growth."
-  ],
-  plumber: [
-    "Living water flowing freely 💧",
-    "Channels cleared! Streams of grace unlocked.",
-    "Connected to the source of eternal water."
-  ],
-  painter: [
-    "Adding vibrant color to your spiritual journey 🎨",
-    "Masterpiece in progress. Grace on full display!",
-    "Brighter perspective painted for today."
-  ]
-};
+const ENCOURAGING_MESSAGES = [
+  "You built another faithful habit today! 🏰",
+  "Roots growing deeper. Keep nurturing your spirit!",
+  "A faithful harvest begins with daily care. ✨",
+  "Streams of grace unlocked for today! 💧",
+  "Masterpiece in progress. Grace on full display! 🎨",
+  "God's strength is made perfect in faithful small steps. ⚡"
+];
 
-function getRandomRoleMessage(role) {
-  const messages = ROLE_MESSAGES[role] || ROLE_MESSAGES.gardener;
-  return messages[Math.floor(Math.random() * messages.length)];
+function getRandomEncouragingMessage() {
+  return ENCOURAGING_MESSAGES[Math.floor(Math.random() * ENCOURAGING_MESSAGES.length)];
 }
 
 // Helper to get YYYY-MM-DD string
@@ -175,7 +160,7 @@ app.post('/completeGoal', authenticateToken, async (req, res) => {
       }
     });
 
-    const roleMessage = getRandomRoleMessage(userRole);
+    const roleMessage = getRandomEncouragingMessage();
     return res.json({
       success: true,
       fishAwarded: fishAward,
@@ -187,6 +172,46 @@ app.post('/completeGoal', authenticateToken, async (req, res) => {
   } catch (err) {
     console.error('[POST /completeGoal Error]:', err);
     return res.status(500).json({ error: 'Failed to process goal completion' });
+  }
+});
+
+// Deposit fish to neighbourhood building fund
+app.post('/depositFish', authenticateToken, async (req, res) => {
+  const uid = req.uid;
+  const { buildingId, amount } = req.body;
+
+  if (!buildingId || !amount || amount <= 0) {
+    return res.status(400).json({ error: 'Missing or invalid buildingId/amount' });
+  }
+
+  try {
+    const userRef = db.collection('users').doc(uid);
+    const buildingRef = db.collection('buildings').doc(buildingId);
+
+    await db.runTransaction(async (transaction) => {
+      const userDoc = await transaction.get(userRef);
+      const buildingDoc = await transaction.get(buildingRef);
+
+      if (!userDoc.exists) throw new Error('User not found');
+      if (!buildingDoc.exists) throw new Error('Building not found');
+
+      const currentFish = userDoc.data().fishBalance || 0;
+      if (currentFish < amount) {
+        throw new Error('Not enough fish available to deposit');
+      }
+
+      transaction.update(userRef, {
+        fishBalance: admin.firestore.FieldValue.increment(-amount)
+      });
+      transaction.update(buildingRef, {
+        groupFund: admin.firestore.FieldValue.increment(amount)
+      });
+    });
+
+    return res.json({ success: true, message: `Successfully deposited ${amount} fish!` });
+  } catch (error) {
+    console.error('[Deposit Fish Error]:', error);
+    return res.status(400).json({ error: error.message || 'Failed to deposit fish' });
   }
 });
 
