@@ -5,19 +5,27 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../models/user_model.dart';
 
-final authInstanceProvider = Provider<FirebaseAuth>((ref) => FirebaseAuth.instance);
-final firestoreInstanceProvider = Provider<FirebaseFirestore>((ref) => FirebaseFirestore.instance);
+final authInstanceProvider = Provider<FirebaseAuth>(
+  (ref) => FirebaseAuth.instance,
+);
+final firestoreInstanceProvider = Provider<FirebaseFirestore>(
+  (ref) => FirebaseFirestore.instance,
+);
 
-// Base Backend URL (defaults to relative '/api' on Web for Firebase Hosting rewrite)
-final backendBaseUrlProvider = StateProvider<String>((ref) => kIsWeb ? '/api' : 'http://localhost:5001');
-final piServerBaseUrlProvider = backendBaseUrlProvider;
+// Firebase Hosting forwards /api to the authenticated Cloud Function. Native
+// builds must provide the deployed HTTPS function URL at compile time.
+final backendBaseUrlProvider = Provider<String>(
+  (ref) => kIsWeb ? '/api' : const String.fromEnvironment('BACKEND_BASE_URL'),
+);
 
 final authStateProvider = StreamProvider<User?>((ref) {
   return ref.watch(authInstanceProvider).authStateChanges();
 });
 
 final userProfileProvider = StreamProvider<UserModel?>((ref) {
-  final authUser = ref.watch(authStateProvider).value ?? ref.watch(authInstanceProvider).currentUser;
+  final authUser =
+      ref.watch(authStateProvider).value ??
+      ref.watch(authInstanceProvider).currentUser;
   if (authUser == null) return Stream.value(null);
 
   final firestore = ref.watch(firestoreInstanceProvider);
@@ -32,7 +40,8 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
   final FirebaseFirestore _firestore;
   final Ref _ref;
 
-  AuthNotifier(this._auth, this._firestore, this._ref) : super(const AsyncValue.data(null));
+  AuthNotifier(this._auth, this._firestore, this._ref)
+    : super(const AsyncValue.data(null));
 
   Future<void> signInWithGoogle() async {
     state = const AsyncValue.loading();
@@ -44,10 +53,8 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
           googleProvider.addScope('profile');
           await _auth.signInWithPopup(googleProvider);
         } catch (webAuthErr) {
-          debugPrint('[Auth Web Notice]: signInWithPopup failed ($webAuthErr). Using emulator fallback sign-in...');
-          if (_auth.currentUser == null) {
-            await _auth.signInAnonymously();
-          }
+          debugPrint('[Auth Web Error]: Google sign-in failed: $webAuthErr');
+          rethrow;
         }
       } else {
         final GoogleSignIn googleSignIn = GoogleSignIn();
@@ -56,7 +63,8 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
           state = const AsyncValue.data(null);
           return;
         }
-        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+        final GoogleSignInAuthentication googleAuth =
+            await googleUser.authentication;
         final OAuthCredential credential = GoogleAuthProvider.credential(
           accessToken: googleAuth.accessToken,
           idToken: googleAuth.idToken,
@@ -71,7 +79,6 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
 
   Future<void> completeOnboarding({
     required String name,
-    required String role,
     required Map<String, String> avatarConfig,
     required String smartGoalText,
   }) async {
@@ -89,7 +96,6 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
       final userRef = _firestore.collection('users').doc(user.uid);
       batch.set(userRef, {
         'name': name.trim(),
-        'role': role,
         'buildingId': null, // No initial building; user can create or join one
         'fishBalance': 10, // Starter bonus
         'avatarConfig': avatarConfig,
@@ -106,6 +112,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
         'frequency': 'daily',
         'currentStreak': 0,
         'sharedToBulletin': false,
+        'archived': false,
         'createdAt': FieldValue.serverTimestamp(),
       });
 
@@ -122,10 +129,11 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
   }
 }
 
-final authNotifierProvider = StateNotifierProvider<AuthNotifier, AsyncValue<void>>((ref) {
-  return AuthNotifier(
-    ref.watch(authInstanceProvider),
-    ref.watch(firestoreInstanceProvider),
-    ref,
-  );
-});
+final authNotifierProvider =
+    StateNotifierProvider<AuthNotifier, AsyncValue<void>>((ref) {
+      return AuthNotifier(
+        ref.watch(authInstanceProvider),
+        ref.watch(firestoreInstanceProvider),
+        ref,
+      );
+    });

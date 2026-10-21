@@ -60,7 +60,9 @@ class AvatarPartsConfig {
   /// Returns body types available for the given [gender], plus any universal.
   static List<AvatarOption> bodyTypesForGender(String gender) {
     return bodyTypes
-        .where((o) => o.genderRestriction == null || o.genderRestriction == gender)
+        .where(
+          (o) => o.genderRestriction == null || o.genderRestriction == gender,
+        )
         .toList();
   }
 
@@ -77,7 +79,9 @@ class AvatarPartsConfig {
   ];
 
   static Color getSkinToneColor(String id) {
-    return skinTones.firstWhere((o) => o.id == id, orElse: () => skinTones[2]).color!;
+    return skinTones
+        .firstWhere((o) => o.id == id, orElse: () => skinTones[2])
+        .color!;
   }
 
   // ---------------------------------------------------------------------------
@@ -135,7 +139,9 @@ class AvatarPartsConfig {
 
   static List<AvatarOption> hairStylesForGender(String gender) {
     return hairStyles
-        .where((o) => o.genderRestriction == null || o.genderRestriction == gender)
+        .where(
+          (o) => o.genderRestriction == null || o.genderRestriction == gender,
+        )
         .toList();
   }
 
@@ -144,7 +150,11 @@ class AvatarPartsConfig {
   // ---------------------------------------------------------------------------
   static const List<AvatarOption> hairColors = [
     AvatarOption(id: 'black', label: 'Black', color: Color(0xFF1A1A2E)),
-    AvatarOption(id: 'dark_brown', label: 'Dark Brown', color: Color(0xFF3E2723)),
+    AvatarOption(
+      id: 'dark_brown',
+      label: 'Dark Brown',
+      color: Color(0xFF3E2723),
+    ),
     AvatarOption(id: 'brown', label: 'Brown', color: Color(0xFF5D4037)),
     AvatarOption(id: 'auburn', label: 'Auburn', color: Color(0xFF8B4513)),
     AvatarOption(id: 'blonde', label: 'Blonde', color: Color(0xFFD4A76A)),
@@ -152,21 +162,23 @@ class AvatarPartsConfig {
   ];
 
   static Color getHairColor(String id) {
-    return hairColors.firstWhere((o) => o.id == id, orElse: () => hairColors[0]).color!;
+    return hairColors
+        .firstWhere((o) => o.id == id, orElse: () => hairColors[0])
+        .color!;
   }
 
   // ---------------------------------------------------------------------------
   // Default configuration  (returned for new users before customisation)
   // ---------------------------------------------------------------------------
   static Map<String, String> get defaultConfig => {
-        'gender': 'neutral',
-        'bodyType': 'standard',
-        'skinTone': 'medium',
-        'faceShape': 'round',
-        'eyeStyle': 'friendly',
-        'noseStyle': 'small',
-        'mouthStyle': 'smile',
-        'hairStyle': 'short_classic',
-        'hairColor': 'black',
-      };
+    'gender': 'neutral',
+    'bodyType': 'standard',
+    'skinTone': 'medium',
+    'faceShape': 'round',
+    'eyeStyle': 'friendly',
+    'noseStyle': 'small',
+    'mouthStyle': 'smile',
+    'hairStyle': 'short_classic',
+    'hairColor': 'black',
+  };
 }

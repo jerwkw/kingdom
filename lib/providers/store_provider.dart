@@ -1,7 +1,6 @@
-import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http/http.dart' as http;
 import '../config/store_config.dart';
+import '../services/api_client.dart';
 import 'auth_provider.dart';
 
 final ownedItemIdsProvider = StreamProvider<Set<String>>((ref) {
@@ -21,67 +20,35 @@ class StoreNotifier extends StateNotifier<AsyncValue<void>> {
   final Ref _ref;
   StoreNotifier(this._ref) : super(const AsyncValue.data(null));
 
+  /// Returns an error message, or null on success. Prices are decided by the
+  /// server; only the item id is sent.
   Future<String?> purchaseItem(StoreItemConfig item) async {
-    final user = _ref.read(authStateProvider).value;
-    if (user == null) return 'Not authenticated';
-
     state = const AsyncValue.loading();
     try {
-      final token = await user.getIdToken();
-      final baseUrl = _ref.read(piServerBaseUrlProvider);
-
-      final response = await http.post(
-        Uri.parse('$baseUrl/purchaseItem'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          'itemId': item.id,
-          'cost': item.cost,
-        }),
-      );
-
-      final data = jsonDecode(response.body);
-      if (response.statusCode == 200 && data['success'] == true) {
-        state = const AsyncValue.data(null);
-        _ref.invalidate(userProfileProvider);
-        _ref.invalidate(ownedItemIdsProvider);
-        return null; // Success
-      } else {
-        final errorMsg = data['error'] ?? 'Purchase failed';
-        state = AsyncValue.error(errorMsg, StackTrace.current);
-        return errorMsg;
-      }
-    } catch (e, st) {
+      await _ref.read(apiClientProvider).post('purchaseItem', {
+        'itemId': item.id,
+      });
+      state = const AsyncValue.data(null);
+      return null;
+    } on ApiException catch (e, st) {
       state = AsyncValue.error(e, st);
-      return 'Connection error reaching server.';
+      return e.message;
     }
   }
 
-  Future<void> equipItem(StoreItemConfig item) async {
-    final user = _ref.read(authStateProvider).value;
-    final userProfile = _ref.read(userProfileProvider).value;
-    if (user == null || userProfile == null) return;
-
-    final firestore = _ref.read(firestoreInstanceProvider);
-    final updatedConfig = Map<String, String>.from(userProfile.avatarConfig);
-
-    final categoryKey = item.category.name;
-    if (updatedConfig[categoryKey] == item.id) {
-      // Unequip if already equipped
-      updatedConfig.remove(categoryKey);
-    } else {
-      // Equip item
-      updatedConfig[categoryKey] = item.id;
+  /// Toggles an owned item in its avatar slot. Ownership is verified
+  /// server-side; clients cannot write premium slots directly.
+  Future<String?> equipItem(StoreItemConfig item) async {
+    try {
+      await _ref.read(apiClientProvider).post('equipItem', {'itemId': item.id});
+      return null;
+    } on ApiException catch (e) {
+      return e.message;
     }
-
-    await firestore.collection('users').doc(user.uid).update({
-      'avatarConfig': updatedConfig,
-    });
   }
 }
 
-final storeNotifierProvider = StateNotifierProvider<StoreNotifier, AsyncValue<void>>((ref) {
-  return StoreNotifier(ref);
-});
+final storeNotifierProvider =
+    StateNotifierProvider<StoreNotifier, AsyncValue<void>>((ref) {
+      return StoreNotifier(ref);
+    });

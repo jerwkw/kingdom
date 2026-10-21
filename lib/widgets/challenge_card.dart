@@ -18,17 +18,14 @@ class ChallengeCard extends StatelessWidget {
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Colors.deepPurple.shade700,
-            Colors.indigo.shade800,
-          ],
+          colors: [Colors.deepPurple.shade700, Colors.indigo.shade800],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.indigo.withOpacity(0.3),
+            color: Colors.indigo.withValues(alpha: 0.3),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -42,7 +39,10 @@ class ChallengeCard extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.amber,
                     borderRadius: BorderRadius.circular(10),
@@ -57,7 +57,10 @@ class ChallengeCard extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                const Text('✨ Shared Challenge', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                const Text(
+                  '✨ Shared Challenge',
+                  style: TextStyle(color: Colors.white70, fontSize: 12),
+                ),
               ],
             ),
             const SizedBox(height: 14),
@@ -80,7 +83,11 @@ class ChallengeCard extends StatelessWidget {
                     SizedBox(width: 4),
                     Text(
                       '+10 Fish & +1 Group Fund',
-                      style: TextStyle(color: Colors.amberAccent, fontSize: 13, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: Colors.amberAccent,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -94,7 +101,9 @@ class ChallengeCard extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: isCompleted ? Colors.grey : Colors.amber,
                     foregroundColor: Colors.black,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ],

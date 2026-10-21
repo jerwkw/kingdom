@@ -1,23 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../models/bulletin_model.dart';
-import '../config/roles_config.dart';
+
+const _reactionLabels = {
+  '❤️': 'Amen',
+  '🙏': 'Praying',
+  '🙌': 'Praise',
+  '💡': 'Inspired',
+};
 
 class BulletinCard extends StatelessWidget {
   final BulletinPost post;
   final String currentUid;
   final Function(String emoji) onReactionToggle;
 
+  /// Shown only on the current user's own posts.
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+
   const BulletinCard({
     super.key,
     required this.post,
     required this.currentUid,
     required this.onReactionToggle,
+    this.onEdit,
+    this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
-    final role = RolesConfig.getRoleById(post.authorRole);
-
     Color badgeColor;
     String typeLabel;
     switch (post.type) {
@@ -53,28 +64,41 @@ class BulletinCard extends StatelessWidget {
             Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: role.color.withOpacity(0.2),
-                  child: Text(role.emoji, style: const TextStyle(fontSize: 18)),
+                  backgroundColor: badgeColor.withValues(alpha: 0.15),
+                  child: Icon(Icons.person, color: badgeColor, size: 20),
                 ),
                 const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      post.authorName,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                    ),
-                    Text(
-                      role.title,
-                      style: TextStyle(fontSize: 12, color: role.color, fontWeight: FontWeight.w600),
-                    ),
-                  ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        post.authorName,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                      if (post.createdAt != null)
+                        Text(
+                          '${DateFormat('d MMM, h:mm a').format(post.createdAt!.toLocal())}'
+                          '${post.isEdited ? ' · edited' : ''}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-                const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
-                    color: badgeColor.withOpacity(0.15),
+                    color: badgeColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -86,6 +110,21 @@ class BulletinCard extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (onEdit != null || onDelete != null)
+                  PopupMenuButton<String>(
+                    tooltip: 'Post options',
+                    onSelected: (value) =>
+                        value == 'edit' ? onEdit?.call() : onDelete?.call(),
+                    itemBuilder: (_) => [
+                      if (onEdit != null)
+                        const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                      if (onDelete != null)
+                        const PopupMenuItem(
+                          value: 'delete',
+                          child: Text('Delete'),
+                        ),
+                    ],
+                  ),
               ],
             ),
             const SizedBox(height: 12),
@@ -93,7 +132,11 @@ class BulletinCard extends StatelessWidget {
             // Post Text
             Text(
               post.text,
-              style: const TextStyle(fontSize: 15, height: 1.4, color: Colors.black87),
+              style: const TextStyle(
+                fontSize: 15,
+                height: 1.4,
+                color: Colors.black87,
+              ),
             ),
             const SizedBox(height: 14),
 
@@ -110,18 +153,24 @@ class BulletinCard extends StatelessWidget {
                   return ChoiceChip(
                     label: Text('$emoji $count'),
                     selected: hasReacted,
-                    selectedColor: badgeColor.withOpacity(0.3),
+                    selectedColor: badgeColor.withValues(alpha: 0.3),
                     onSelected: (_) => onReactionToggle(emoji),
                   );
                 }),
                 PopupMenuButton<String>(
-                  icon: const Icon(Icons.add_reaction_outlined, size: 20, color: Colors.grey),
+                  icon: const Icon(
+                    Icons.add_reaction_outlined,
+                    size: 20,
+                    color: Colors.grey,
+                  ),
                   onSelected: onReactionToggle,
+                  tooltip: 'Add reaction',
                   itemBuilder: (context) => [
-                    const PopupMenuItem(value: '❤️', child: Text('❤️ Amen')),
-                    const PopupMenuItem(value: '🙏', child: Text('🙏 Praying')),
-                    const PopupMenuItem(value: '🙌', child: Text('🙌 Praise')),
-                    const PopupMenuItem(value: '💡', child: Text('💡 Inspired')),
+                    for (final emoji in BulletinPost.allowedReactions)
+                      PopupMenuItem(
+                        value: emoji,
+                        child: Text('$emoji ${_reactionLabels[emoji]}'),
+                      ),
                   ],
                 ),
               ],

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../config/limits.dart';
 import '../providers/auth_provider.dart';
 import '../providers/building_provider.dart';
 import '../models/building_model.dart';
-import '../config/roles_config.dart';
 import '../widgets/avatar_renderer.dart';
 import '../widgets/create_building_dialog.dart';
 import 'bulletin_board_screen.dart';
+import 'guild_achievements_screen.dart';
+import '../widgets/notification_bell.dart';
 
 class NeighbourhoodTab extends ConsumerWidget {
   const NeighbourhoodTab({super.key});
@@ -28,6 +30,7 @@ class NeighbourhoodTab extends ConsumerWidget {
         content: TextField(
           controller: codeController,
           textCapitalization: TextCapitalization.characters,
+          maxLength: TextLimits.inviteCodeMax,
           decoration: const InputDecoration(
             labelText: 'Invite Code',
             hintText: 'e.g. GUILD2026',
@@ -50,11 +53,15 @@ class NeighbourhoodTab extends ConsumerWidget {
                 if (ctx.mounted) {
                   Navigator.pop(ctx);
                   if (err != null) {
-                    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(err)));
+                    ScaffoldMessenger.of(
+                      ctx,
+                    ).showSnackBar(SnackBar(content: Text(err)));
                   } else {
                     ScaffoldMessenger.of(ctx).showSnackBar(
                       const SnackBar(
-                        content: Text('📩 Join request submitted! Waiting for admin approval.'),
+                        content: Text(
+                          '📩 Join request submitted! Waiting for admin approval.',
+                        ),
                       ),
                     );
                   }
@@ -72,7 +79,11 @@ class NeighbourhoodTab extends ConsumerWidget {
     );
   }
 
-  void _confirmLeaveBuilding(BuildContext context, WidgetRef ref, BuildingModel building) {
+  void _confirmLeaveBuilding(
+    BuildContext context,
+    WidgetRef ref,
+    BuildingModel building,
+  ) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -90,7 +101,9 @@ class NeighbourhoodTab extends ConsumerWidget {
                   .read(buildingNotifierProvider.notifier)
                   .leaveBuilding(building.id);
               if (context.mounted && err != null) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(err)));
               }
             },
             style: ElevatedButton.styleFrom(
@@ -104,6 +117,136 @@ class NeighbourhoodTab extends ConsumerWidget {
     );
   }
 
+  void _showDepositFishDialog(
+    BuildContext context,
+    WidgetRef ref,
+    BuildingModel building,
+    int userFishBalance,
+  ) {
+    int selectedAmount = userFishBalance < 5 ? userFishBalance : 5;
+    final customController = TextEditingController(text: '$selectedAmount');
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: const Text('🐟 Deposit Fish to Guild'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Your Balance: $userFishBalance Fish',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.teal.shade800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Contribute your fish to help expand the Neighbourhood Guild and unlock community achievements!',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 8,
+                    children: [1, 5, 10, 25, userFishBalance]
+                        .where((amt) => amt > 0 && amt <= userFishBalance)
+                        .toSet()
+                        .map((amt) {
+                          final isSelected = selectedAmount == amt;
+                          return ChoiceChip(
+                            label: Text('$amt 🐟'),
+                            selected: isSelected,
+                            onSelected: (_) {
+                              setState(() {
+                                selectedAmount = amt;
+                                customController.text = amt.toString();
+                              });
+                            },
+                          );
+                        })
+                        .toList(),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: customController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Custom Amount',
+                      border: OutlineInputBorder(),
+                      suffixText: 'Fish',
+                    ),
+                    onChanged: (val) {
+                      final parsed = int.tryParse(val);
+                      if (parsed != null && parsed > 0) {
+                        setState(() => selectedAmount = parsed);
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton.icon(
+                onPressed:
+                    userFishBalance <= 0 ||
+                        selectedAmount <= 0 ||
+                        selectedAmount > userFishBalance
+                    ? null
+                    : () async {
+                        Navigator.pop(ctx);
+                        final err = await ref
+                            .read(buildingNotifierProvider.notifier)
+                            .depositFish(building.id, selectedAmount);
+                        if (context.mounted) {
+                          if (err != null) {
+                            ScaffoldMessenger.of(
+                              context,
+                            ).showSnackBar(SnackBar(content: Text(err)));
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  '🎉 Deposited $selectedAmount 🐟 to "${building.name}". '
+                                  'You have ${userFishBalance - selectedAmount} 🐟 left.',
+                                ),
+                                backgroundColor: Colors.teal.shade800,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                icon: const Icon(Icons.volunteer_activism),
+                label: Text('Deposit $selectedAmount 🐟'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.amber.shade700,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  void _openAchievements(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const GuildAchievementsScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userProfileAsync = ref.watch(userProfileProvider);
@@ -111,12 +254,17 @@ class NeighbourhoodTab extends ConsumerWidget {
     final buildingDocAsync = ref.watch(currentBuildingDocProvider);
     final memberStatsAsync = ref.watch(buildingMemberStatsProvider);
 
-    final hasBuilding = user != null && user.buildingId != null && user.buildingId!.isNotEmpty;
+    final hasBuilding =
+        user != null && user.buildingId != null && user.buildingId!.isNotEmpty;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Neighbourhood Guild', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Neighbourhood Guild',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         actions: [
+          const NotificationBell(),
           if (hasBuilding) ...[
             IconButton(
               icon: const Icon(Icons.forum_outlined),
@@ -124,7 +272,9 @@ class NeighbourhoodTab extends ConsumerWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const BulletinBoardScreen()),
+                  MaterialPageRoute(
+                    builder: (_) => const BulletinBoardScreen(),
+                  ),
                 );
               },
             ),
@@ -192,141 +342,223 @@ class NeighbourhoodTab extends ConsumerWidget {
 
                       final groupFund = building.groupFund;
                       const expansionTarget = 500;
-                      final progress = (groupFund / expansionTarget).clamp(0.0, 1.0);
+                      final progress = (groupFund / expansionTarget).clamp(
+                        0.0,
+                        1.0,
+                      );
                       final isUserAdmin = building.isAdmin(user.uid);
 
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            width: double.infinity,
-                            margin: const EdgeInsets.all(16),
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [Colors.teal.shade700, Colors.green.shade900],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.teal.withValues(alpha: 0.3),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
+                          // Tapping the guild header opens its history.
+                          GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => _openAchievements(context),
+                            child: Container(
+                              width: double.infinity,
+                              margin: const EdgeInsets.all(16),
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.teal.shade700,
+                                    Colors.green.shade900,
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
                                 ),
-                              ],
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    const Text('🏰', style: TextStyle(fontSize: 32)),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            building.name,
-                                            style: const TextStyle(
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                          if (building.description.isNotEmpty) ...[
-                                            const SizedBox(height: 2),
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.teal.withValues(alpha: 0.3),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Text(
+                                        '🏰',
+                                        style: TextStyle(fontSize: 32),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
                                             Text(
-                                              building.description,
-                                              style: const TextStyle(color: Colors.white70, fontSize: 12),
-                                            ),
-                                          ],
-                                          const SizedBox(height: 4),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                            decoration: BoxDecoration(
-                                              color: Colors.white24,
-                                              borderRadius: BorderRadius.circular(8),
-                                            ),
-                                            child: Text(
-                                              'Invite Code: ${building.inviteCode}',
+                                              building.name,
                                               style: const TextStyle(
-                                                color: Colors.amberAccent,
-                                                fontSize: 12,
+                                                fontSize: 20,
                                                 fontWeight: FontWeight.bold,
+                                                color: Colors.white,
                                               ),
                                             ),
-                                          ),
-                                        ],
+                                            if (building
+                                                .description
+                                                .isNotEmpty) ...[
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                building.description,
+                                                style: const TextStyle(
+                                                  color: Colors.white70,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ],
+                                            const SizedBox(height: 4),
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 2,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white24,
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                              child: Text(
+                                                'Invite Code: ${building.inviteCode}',
+                                                style: const TextStyle(
+                                                  color: Colors.amberAccent,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                    ElevatedButton.icon(
-                                      onPressed: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(builder: (_) => const BulletinBoardScreen()),
-                                        );
-                                      },
-                                      icon: const Icon(Icons.chat_bubble_outline, size: 16),
-                                      label: const Text('Bulletin'),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.white,
-                                        foregroundColor: Colors.teal.shade900,
+                                      // Compact so the guild name keeps its
+                                      // width on narrow phones.
+                                      IconButton.filled(
+                                        tooltip: 'Bulletin Board',
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const BulletinBoardScreen(),
+                                            ),
+                                          );
+                                        },
+                                        icon: const Icon(
+                                          Icons.chat_bubble_outline,
+                                        ),
+                                        style: IconButton.styleFrom(
+                                          backgroundColor: Colors.white,
+                                          foregroundColor: Colors.teal.shade900,
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 20),
-
-                                // Group Expansion Progress
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    const Text(
-                                      '🌳 Community Playground Expansion',
-                                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
-                                    ),
-                                    Text(
-                                      '$groupFund / $expansionTarget 🐟',
-                                      style: const TextStyle(color: Colors.amberAccent, fontWeight: FontWeight.bold, fontSize: 13),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: LinearProgressIndicator(
-                                    value: progress,
-                                    minHeight: 10,
-                                    backgroundColor: Colors.white24,
-                                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.amberAccent),
+                                    ],
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(height: 16),
+
+                                  _buildGuildActions(
+                                    context,
+                                    ref,
+                                    building,
+                                    userProfileAsync.value?.fishBalance ?? 0,
+                                  ),
+                                  const SizedBox(height: 16),
+
+                                  // Group Expansion Progress (Tappable for achievements)
+                                  InkWell(
+                                    onTap: () => _openAchievements(context),
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Wrap(
+                                          alignment: WrapAlignment.spaceBetween,
+                                          spacing: 8,
+                                          runSpacing: 2,
+                                          children: [
+                                            const Text(
+                                              '🌳 Community Expansion',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                            Text(
+                                              '$groupFund / $expansionTarget 🐟 · Tap for history',
+                                              style: const TextStyle(
+                                                color: Colors.amberAccent,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 8),
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                          child: LinearProgressIndicator(
+                                            value: progress,
+                                            minHeight: 10,
+                                            backgroundColor: Colors.white24,
+                                            valueColor:
+                                                const AlwaysStoppedAnimation<
+                                                  Color
+                                                >(Colors.amberAccent),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
 
                           // Pending Join Requests (Admin Only)
-                          if (isUserAdmin && building.pendingJoinRequests.isNotEmpty) ...[
-                            _buildPendingRequestsSection(context, ref, building),
+                          if (isUserAdmin &&
+                              building.pendingJoinRequests.isNotEmpty) ...[
+                            _buildPendingRequestsSection(
+                              context,
+                              ref,
+                              building,
+                            ),
                           ],
                         ],
                       );
                     },
-                    loading: () => const Padding(padding: EdgeInsets.all(16), child: LinearProgressIndicator()),
+                    loading: () => const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: LinearProgressIndicator(),
+                    ),
                     error: (err, _) => Padding(
                       padding: const EdgeInsets.all(16),
-                      child: Text('Error loading building: $err', style: const TextStyle(color: Colors.red)),
+                      child: Text(
+                        'Error loading building: $err',
+                        style: const TextStyle(color: Colors.red),
+                      ),
                     ),
                   ),
 
                   const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 8.0,
+                    ),
                     child: Text(
                       'Guild Members & Consistency',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
 
@@ -337,7 +569,9 @@ class NeighbourhoodTab extends ConsumerWidget {
                       if (members.isEmpty) {
                         return const Padding(
                           padding: EdgeInsets.all(24.0),
-                          child: Center(child: Text('No members found in neighbourhood.')),
+                          child: Center(
+                            child: Text('No members found in neighbourhood.'),
+                          ),
                         );
                       }
 
@@ -347,88 +581,128 @@ class NeighbourhoodTab extends ConsumerWidget {
                         itemCount: members.length,
                         itemBuilder: (context, index) {
                           final member = members[index];
-                          final role = RolesConfig.getRoleById(member.role);
-                          final isLeader = building != null && building.isLeader(member.uid);
-                          final isAdmin = building != null && building.isAdmin(member.uid);
-                          final isCurrentUserLeader = building != null && building.isLeader(user.uid);
+                          final isLeader =
+                              building != null && building.isLeader(member.uid);
+                          final isAdmin =
+                              building != null && building.isAdmin(member.uid);
+                          final isCurrentUserLeader =
+                              building != null && building.isLeader(user.uid);
 
                           return Card(
-                            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 6,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
                             child: Padding(
                               padding: const EdgeInsets.all(12.0),
                               child: Row(
                                 children: [
                                   AvatarRenderer(
-                                    roleId: member.role,
                                     avatarConfig: member.avatarConfig,
                                     size: 54,
                                   ),
                                   const SizedBox(width: 14),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Row(
                                           children: [
                                             Text(
                                               member.name,
-                                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 15,
+                                              ),
                                             ),
                                             const SizedBox(width: 6),
                                             if (isLeader) ...[
                                               Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 6,
+                                                      vertical: 2,
+                                                    ),
                                                 decoration: BoxDecoration(
                                                   color: Colors.amber.shade100,
-                                                  borderRadius: BorderRadius.circular(6),
+                                                  borderRadius:
+                                                      BorderRadius.circular(6),
                                                 ),
-                                                child: const Text('👑 Leader', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.amber)),
+                                                child: const Text(
+                                                  '👑 Leader',
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.amber,
+                                                  ),
+                                                ),
                                               ),
                                             ] else if (isAdmin) ...[
                                               Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 6,
+                                                      vertical: 2,
+                                                    ),
                                                 decoration: BoxDecoration(
                                                   color: Colors.blue.shade50,
-                                                  borderRadius: BorderRadius.circular(6),
+                                                  borderRadius:
+                                                      BorderRadius.circular(6),
                                                 ),
-                                                child: const Text('⭐ Admin', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blue)),
+                                                child: const Text(
+                                                  '⭐ Admin',
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.blue,
+                                                  ),
+                                                ),
                                               ),
                                             ],
                                           ],
                                         ),
-                                        const SizedBox(height: 2),
-                                        Row(
-                                          children: [
-                                            Text(role.emoji, style: const TextStyle(fontSize: 12)),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              role.title,
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w600,
-                                                color: role.color,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
                                         // Promote to Admin option for Leader
-                                        if (isCurrentUserLeader && !isAdmin && member.uid != user.uid) ...[
+                                        if (isCurrentUserLeader &&
+                                            !isAdmin &&
+                                            member.uid != user.uid) ...[
                                           TextButton.icon(
                                             onPressed: () async {
                                               final err = await ref
-                                                  .read(buildingNotifierProvider.notifier)
-                                                  .promoteAdmin(building.id, member.uid);
-                                              if (context.mounted && err != null) {
-                                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+                                                  .read(
+                                                    buildingNotifierProvider
+                                                        .notifier,
+                                                  )
+                                                  .promoteAdmin(
+                                                    building.id,
+                                                    member.uid,
+                                                  );
+                                              if (context.mounted &&
+                                                  err != null) {
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  SnackBar(content: Text(err)),
+                                                );
                                               }
                                             },
-                                            icon: const Icon(Icons.star_outline, size: 14),
-                                            label: const Text('Promote to Admin', style: TextStyle(fontSize: 11)),
+                                            icon: const Icon(
+                                              Icons.star_outline,
+                                              size: 14,
+                                            ),
+                                            label: const Text(
+                                              'Promote to Admin',
+                                              style: TextStyle(fontSize: 11),
+                                            ),
                                             style: TextButton.styleFrom(
                                               padding: EdgeInsets.zero,
                                               minimumSize: const Size(50, 24),
-                                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                              tapTargetSize:
+                                                  MaterialTapTargetSize
+                                                      .shrinkWrap,
                                             ),
                                           ),
                                         ],
@@ -450,9 +724,14 @@ class NeighbourhoodTab extends ConsumerWidget {
                                               : Colors.amber.shade800,
                                         ),
                                       ),
-                                      const Text(
-                                        '7-day consistency',
-                                        style: TextStyle(fontSize: 10, color: Colors.grey),
+                                      Text(
+                                        member.completionTarget > 0
+                                            ? '${member.completions} of ${member.completionTarget} check-ins · 7 days'
+                                            : 'No active goals',
+                                        style: const TextStyle(
+                                          fontSize: 10,
+                                          color: Colors.grey,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -463,15 +742,106 @@ class NeighbourhoodTab extends ConsumerWidget {
                         },
                       );
                     },
-                    loading: () => const Padding(padding: EdgeInsets.all(32), child: Center(child: CircularProgressIndicator())),
+                    loading: () => const Padding(
+                      padding: EdgeInsets.all(32),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
                     error: (err, _) => Padding(
                       padding: const EdgeInsets.all(16),
-                      child: Text('Error loading member stats: $err', style: const TextStyle(color: Colors.red)),
+                      child: Text(
+                        'Error loading member stats: $err',
+                        style: const TextStyle(color: Colors.red),
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
+    );
+  }
+
+  /// Deposit and Achievements actions. Stacks vertically on narrow screens
+  /// so neither button clips; deposit shows the member's balance and is
+  /// disabled with an explanation when they have no fish.
+  Widget _buildGuildActions(
+    BuildContext context,
+    WidgetRef ref,
+    BuildingModel building,
+    int fishBalance,
+  ) {
+    final canDeposit = fishBalance > 0;
+    final shape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+    );
+
+    final deposit = Tooltip(
+      message: canDeposit
+          ? 'Give some of your $fishBalance fish to the guild fund'
+          : 'You have no fish yet. Complete goals and daily reflections to earn fish.',
+      child: ElevatedButton.icon(
+        onPressed: canDeposit
+            ? () => _showDepositFishDialog(context, ref, building, fishBalance)
+            : null,
+        icon: const Icon(Icons.savings_outlined, size: 18),
+        label: Text('Deposit Fish · $fishBalance 🐟'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.amber.shade400,
+          foregroundColor: Colors.black87,
+          disabledBackgroundColor: Colors.white24,
+          disabledForegroundColor: Colors.white70,
+          elevation: 2,
+          minimumSize: const Size.fromHeight(44),
+          shape: shape,
+        ),
+      ),
+    );
+
+    final achievements = OutlinedButton.icon(
+      onPressed: () => _openAchievements(context),
+      icon: const Icon(
+        Icons.emoji_events_outlined,
+        size: 18,
+        color: Colors.white,
+      ),
+      label: const Text(
+        'Achievements 🏆',
+        style: TextStyle(color: Colors.white),
+      ),
+      style: OutlinedButton.styleFrom(
+        side: const BorderSide(color: Colors.white54),
+        minimumSize: const Size.fromHeight(44),
+        shape: shape,
+      ),
+    );
+
+    final zeroBalanceHint = canDeposit
+        ? null
+        : const Padding(
+            padding: EdgeInsets.only(top: 8),
+            child: Text(
+              'No fish to deposit yet — complete goals and daily reflections to earn 10 🐟 each.',
+              style: TextStyle(color: Colors.white70, fontSize: 12),
+            ),
+          );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final buttons = constraints.maxWidth < 360
+            ? Column(
+                children: [deposit, const SizedBox(height: 8), achievements],
+              )
+            : Row(
+                children: [
+                  Expanded(child: deposit),
+                  const SizedBox(width: 10),
+                  Expanded(child: achievements),
+                ],
+              );
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [buttons, ?zeroBalanceHint],
+        );
+      },
     );
   }
 
@@ -508,11 +878,16 @@ class NeighbourhoodTab extends ConsumerWidget {
             child: ElevatedButton.icon(
               onPressed: () => _showCreateBuildingDialog(context),
               icon: const Icon(Icons.add_business),
-              label: const Text('Create a Neighbourhood', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              label: const Text(
+                'Create a Neighbourhood',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.teal.shade700,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
             ),
           ),
@@ -523,11 +898,16 @@ class NeighbourhoodTab extends ConsumerWidget {
             child: OutlinedButton.icon(
               onPressed: () => _showJoinBuildingDialog(context, ref),
               icon: const Icon(Icons.vpn_key),
-              label: const Text('Join with Invite Code', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              label: const Text(
+                'Join with Invite Code',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.teal.shade800,
                 side: BorderSide(color: Colors.teal.shade700, width: 1.5),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
             ),
           ),
@@ -536,7 +916,11 @@ class NeighbourhoodTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildPendingRequestsSection(BuildContext context, WidgetRef ref, BuildingModel building) {
+  Widget _buildPendingRequestsSection(
+    BuildContext context,
+    WidgetRef ref,
+    BuildingModel building,
+  ) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       color: Colors.amber.shade50,
@@ -555,7 +939,11 @@ class NeighbourhoodTab extends ConsumerWidget {
                 const SizedBox(width: 8),
                 Text(
                   'Pending Join Requests (${building.pendingJoinRequests.length})',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.amber.shade900),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: Colors.amber.shade900,
+                  ),
                 ),
               ],
             ),
@@ -565,39 +953,50 @@ class NeighbourhoodTab extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(vertical: 4.0),
                 child: Row(
                   children: [
-                    AvatarRenderer(
-                      roleId: 'gardener',
-                      avatarConfig: req.avatarConfig,
-                      size: 38,
-                    ),
+                    AvatarRenderer(avatarConfig: req.avatarConfig, size: 38),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         req.name,
-                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.check_circle, color: Colors.green, size: 28),
+                      icon: const Icon(
+                        Icons.check_circle,
+                        color: Colors.green,
+                        size: 28,
+                      ),
                       tooltip: 'Approve',
                       onPressed: () async {
                         final err = await ref
                             .read(buildingNotifierProvider.notifier)
                             .approveJoinRequest(building.id, req.uid);
                         if (context.mounted && err != null) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+                          ScaffoldMessenger.of(
+                            context,
+                          ).showSnackBar(SnackBar(content: Text(err)));
                         }
                       },
                     ),
                     IconButton(
-                      icon: const Icon(Icons.cancel, color: Colors.red, size: 28),
+                      icon: const Icon(
+                        Icons.cancel,
+                        color: Colors.red,
+                        size: 28,
+                      ),
                       tooltip: 'Reject',
                       onPressed: () async {
                         final err = await ref
                             .read(buildingNotifierProvider.notifier)
                             .rejectJoinRequest(building.id, req.uid);
                         if (context.mounted && err != null) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+                          ScaffoldMessenger.of(
+                            context,
+                          ).showSnackBar(SnackBar(content: Text(err)));
                         }
                       },
                     ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../config/avatar_parts_config.dart';
-import '../config/roles_config.dart';
+import '../config/limits.dart';
 import '../providers/auth_provider.dart';
 import 'avatar_creation_screen.dart';
 
@@ -18,7 +18,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final TextEditingController _smartGoalController = TextEditingController();
 
   int _currentPage = 0;
-  String _selectedRole = 'gardener';
   Map<String, String> _avatarConfig = AvatarPartsConfig.defaultConfig;
 
   @override
@@ -26,7 +25,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     super.initState();
     final authUser = ref.read(authInstanceProvider).currentUser;
     if (authUser != null && authUser.displayName != null) {
-      _nameController.text = authUser.displayName!;
+      final displayName = authUser.displayName!.trim();
+      _nameController.text = displayName.length > TextLimits.name
+          ? displayName.substring(0, TextLimits.name)
+          : displayName;
     }
   }
 
@@ -99,16 +101,27 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   ElevatedButton.icon(
                     onPressed: isSubmitting
                         ? null
-                        : () => ref.read(authNotifierProvider.notifier).signInWithGoogle(),
+                        : () => ref
+                              .read(authNotifierProvider.notifier)
+                              .signInWithGoogle(),
                     icon: const Icon(Icons.login, color: Colors.black),
                     label: Text(
                       isSubmitting ? 'Signing in...' : 'Sign in with Google',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Colors.black,
+                      ),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.amber,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 16,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
                   ),
                 ],
@@ -119,10 +132,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       );
     }
 
-    // ── Onboarding flow (4 pages) ────────────────────────────────────
+    // ── Onboarding flow (3 pages) ────────────────────────────────────
     return Scaffold(
       appBar: AppBar(
-        title: Text('Step ${_currentPage + 1} of 4'),
+        title: Text('Step ${_currentPage + 1} of 3'),
         centerTitle: true,
       ),
       body: PageView(
@@ -148,9 +161,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 const SizedBox(height: 24),
                 TextField(
                   controller: _nameController,
+                  maxLength: TextLimits.name,
                   decoration: InputDecoration(
                     labelText: 'Display Name',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     prefixIcon: const Icon(Icons.person),
                   ),
                 ),
@@ -164,101 +180,25 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.all(16),
                       backgroundColor: Colors.indigo,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text('Next: Choose Your Role', style: TextStyle(color: Colors.white)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // ─ Page 2: Role Selection ──────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Choose Your Church Role',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  'Roles represent your unique spiritual contribution to your cell group.',
-                  style: TextStyle(color: Colors.grey),
-                ),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: RolesConfig.allRoles.length,
-                    itemBuilder: (context, index) {
-                      final role = RolesConfig.allRoles[index];
-                      final isSelected = _selectedRole == role.id;
-
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          side: BorderSide(
-                            color: isSelected ? role.color : Colors.transparent,
-                            width: 2,
-                          ),
-                        ),
-                        elevation: isSelected ? 4 : 1,
-                        child: ListTile(
-                          title: Row(
-                            children: [
-                              Text(role.emoji, style: const TextStyle(fontSize: 24)),
-                              const SizedBox(width: 10),
-                              Text(
-                                role.title,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: isSelected ? role.color : Colors.black,
-                                ),
-                              ),
-                            ],
-                          ),
-                          subtitle: Padding(
-                            padding: const EdgeInsets.only(top: 4.0),
-                            child: Text(role.description),
-                          ),
-                          trailing: Icon(
-                            isSelected ? Icons.check_circle : Icons.circle_outlined,
-                            color: isSelected ? role.color : Colors.grey,
-                          ),
-                          onTap: () => setState(() => _selectedRole = role.id),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                Row(
-                  children: [
-                    TextButton(onPressed: _previousPage, child: const Text('Back')),
-                    const Spacer(),
-                    ElevatedButton(
-                      onPressed: _nextPage,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                        backgroundColor: Colors.indigo,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Text('Next: Design Your Avatar', style: TextStyle(color: Colors.white)),
                     ),
-                  ],
+                    child: const Text(
+                      'Next: Design Your Avatar',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
 
-          // ─ Page 3: Avatar Creation ─────────────────────────────────
+          // ─ Page 2: Avatar Creation ─────────────────────────────────
           Column(
             children: [
               Expanded(
                 child: AvatarCreationPanel(
-                  roleId: _selectedRole,
                   initialConfig: _avatarConfig,
                   onConfigChanged: (config) {
                     _avatarConfig = config;
@@ -266,19 +206,33 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
                 child: Row(
                   children: [
-                    TextButton(onPressed: _previousPage, child: const Text('Back')),
+                    TextButton(
+                      onPressed: _previousPage,
+                      child: const Text('Back'),
+                    ),
                     const Spacer(),
                     ElevatedButton(
                       onPressed: _nextPage,
                       style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 14,
+                        ),
                         backgroundColor: Colors.indigo,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                      child: const Text('Next: Set SMART Goal', style: TextStyle(color: Colors.white)),
+                      child: const Text(
+                        'Next: Set SMART Goal',
+                        style: TextStyle(color: Colors.white),
+                      ),
                     ),
                   ],
                 ),
@@ -306,15 +260,22 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 TextField(
                   controller: _smartGoalController,
                   maxLines: 4,
+                  maxLength: TextLimits.goalText,
                   decoration: InputDecoration(
-                    hintText: 'e.g., Read 1 chapter of the Gospel of John every morning at 7:30 AM',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    hintText:
+                        'e.g., Read 1 chapter of the Gospel of John every morning at 7:30 AM',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
                 const Spacer(),
                 Row(
                   children: [
-                    TextButton(onPressed: _previousPage, child: const Text('Back')),
+                    TextButton(
+                      onPressed: _previousPage,
+                      child: const Text('Back'),
+                    ),
                     const Spacer(),
                     ElevatedButton(
                       onPressed: isSubmitting
@@ -324,32 +285,55 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                               final goal = _smartGoalController.text.trim();
                               if (name.isEmpty) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Please enter a display name (Step 1)')),
+                                  const SnackBar(
+                                    content: Text(
+                                      'Please enter a display name (Step 1)',
+                                    ),
+                                  ),
                                 );
-                                _pageController.animateToPage(0, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+                                _pageController.animateToPage(
+                                  0,
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeInOut,
+                                );
                                 return;
                               }
                               if (goal.isEmpty) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Please enter your SMART goal before completing setup.')),
+                                  const SnackBar(
+                                    content: Text(
+                                      'Please enter your SMART goal before completing setup.',
+                                    ),
+                                  ),
                                 );
                                 return;
                               }
-                              ref.read(authNotifierProvider.notifier).completeOnboarding(
+                              ref
+                                  .read(authNotifierProvider.notifier)
+                                  .completeOnboarding(
                                     name: name,
-                                    role: _selectedRole,
                                     avatarConfig: _avatarConfig,
                                     smartGoalText: goal,
                                   );
                             },
                       style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 14,
+                        ),
                         backgroundColor: Colors.teal,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                       child: Text(
-                        isSubmitting ? 'Creating Profile...' : 'Complete Setup 🚀',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        isSubmitting
+                            ? 'Creating Profile...'
+                            : 'Complete Setup 🚀',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],

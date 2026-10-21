@@ -7,13 +7,11 @@ import '../widgets/avatar_renderer.dart';
 /// Shows a live preview at the top and scrollable customisation sections below.
 /// Used during onboarding and can be re-opened later from the Avatar tab.
 class AvatarCreationPanel extends StatefulWidget {
-  final String roleId;
   final Map<String, String>? initialConfig;
   final ValueChanged<Map<String, String>> onConfigChanged;
 
   const AvatarCreationPanel({
     super.key,
-    required this.roleId,
     this.initialConfig,
     required this.onConfigChanged,
   });
@@ -67,15 +65,15 @@ class _AvatarCreationPanelState extends State<AvatarCreationPanel> {
         Container(
           padding: const EdgeInsets.symmetric(vertical: 20),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
-            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
+            color: Theme.of(
+              context,
+            ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+            borderRadius: const BorderRadius.vertical(
+              bottom: Radius.circular(24),
+            ),
           ),
           child: Center(
-            child: AvatarRenderer(
-              roleId: widget.roleId,
-              avatarConfig: _config,
-              size: 150,
-            ),
+            child: AvatarRenderer(avatarConfig: _config, size: 150),
           ),
         ),
 
@@ -168,7 +166,11 @@ class _SectionTitle extends StatelessWidget {
       padding: const EdgeInsets.only(top: 16, bottom: 8),
       child: Text(
         label,
-        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey),
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          color: Colors.grey,
+        ),
       ),
     );
   }
@@ -236,7 +238,12 @@ class _ColorCircleSelector extends StatelessWidget {
                 width: 3,
               ),
               boxShadow: isSelected
-                  ? [BoxShadow(color: Colors.indigo.withValues(alpha: 0.3), blurRadius: 6)]
+                  ? [
+                      BoxShadow(
+                        color: Colors.indigo.withValues(alpha: 0.3),
+                        blurRadius: 6,
+                      ),
+                    ]
                   : null,
             ),
             child: isSelected

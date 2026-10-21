@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../config/avatar_anchor_system.dart';
 import '../config/avatar_parts_config.dart';
-import '../config/roles_config.dart';
 import '../config/store_config.dart';
 
 /// Renders a character avatar by compositing drawn layers.
@@ -13,21 +12,20 @@ import '../config/store_config.dart';
 /// positioned in a Stack, using the same relative coordinates. Add `flutter_svg`
 /// to pubspec.yaml when ready.
 class AvatarRenderer extends StatelessWidget {
-  final String roleId;
   final Map<String, String> avatarConfig;
   final double size;
 
   const AvatarRenderer({
     super.key,
-    required this.roleId,
     required this.avatarConfig,
     this.size = 120,
   });
 
   @override
   Widget build(BuildContext context) {
-    final role = RolesConfig.getRoleById(roleId);
-    final companionItem = StoreConfig.getItemById(avatarConfig['companion'] ?? '');
+    final companionItem = StoreConfig.getItemById(
+      avatarConfig['companion'] ?? '',
+    );
 
     return SizedBox(
       width: size,
@@ -39,21 +37,6 @@ class AvatarRenderer extends StatelessWidget {
           CustomPaint(
             size: Size(size, size),
             painter: AvatarPainter(config: avatarConfig),
-          ),
-
-          // Role badge (bottom-left)
-          Positioned(
-            bottom: 0,
-            left: 0,
-            child: Container(
-              padding: const EdgeInsets.all(3),
-              decoration: BoxDecoration(
-                color: role.color.withValues(alpha: 0.2),
-                shape: BoxShape.circle,
-                border: Border.all(color: role.color, width: 1.5),
-              ),
-              child: Text(role.emoji, style: TextStyle(fontSize: size * 0.12)),
-            ),
           ),
 
           // Companion pet (bottom-right, if equipped)
@@ -68,7 +51,10 @@ class AvatarRenderer extends StatelessWidget {
                   shape: BoxShape.circle,
                   boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
                 ),
-                child: Text(companionItem.emoji, style: TextStyle(fontSize: size * 0.14)),
+                child: Text(
+                  companionItem.emoji,
+                  style: TextStyle(fontSize: size * 0.14),
+                ),
               ),
             ),
         ],
@@ -93,8 +79,12 @@ class AvatarPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final skinColor = AvatarPartsConfig.getSkinToneColor(config['skinTone'] ?? 'medium');
-    final hairColor = AvatarPartsConfig.getHairColor(config['hairColor'] ?? 'black');
+    final skinColor = AvatarPartsConfig.getSkinToneColor(
+      config['skinTone'] ?? 'medium',
+    );
+    final hairColor = AvatarPartsConfig.getHairColor(
+      config['hairColor'] ?? 'black',
+    );
     final faceShape = config['faceShape'] ?? 'round';
 
     // ── Compute anchors once — everything else reads from this ──────────
@@ -158,7 +148,12 @@ class AvatarPainter extends CustomPainter {
     final torsoTop = neckTop.dy + size.height * 0.06;
     final cx = geo.center.dx;
     final torsoRect = RRect.fromRectAndCorners(
-      Rect.fromLTRB(cx - shoulderWidth, torsoTop, cx + shoulderWidth, size.height),
+      Rect.fromLTRB(
+        cx - shoulderWidth,
+        torsoTop,
+        cx + shoulderWidth,
+        size.height,
+      ),
       topLeft: const Radius.circular(12),
       topRight: const Radius.circular(12),
     );
@@ -258,7 +253,10 @@ class AvatarPainter extends CustomPainter {
 
     for (final pos in [geo.eyeLeft, geo.eyeRight]) {
       // White
-      canvas.drawOval(Rect.fromCenter(center: pos, width: eyeW, height: eyeH), whitePaint);
+      canvas.drawOval(
+        Rect.fromCenter(center: pos, width: eyeW, height: eyeH),
+        whitePaint,
+      );
       // Pupil
       canvas.drawCircle(pos, pupilR, pupilPaint);
       // Highlight
@@ -278,7 +276,9 @@ class AvatarPainter extends CustomPainter {
     final scale = geo.noseScale;
     final r = geo.radius;
     final nc = geo.noseCenter;
-    final skinColor = AvatarPartsConfig.getSkinToneColor(config['skinTone'] ?? 'medium');
+    final skinColor = AvatarPartsConfig.getSkinToneColor(
+      config['skinTone'] ?? 'medium',
+    );
     final nosePaint = Paint()..color = _darken(skinColor, 0.12);
 
     switch (noseStyle) {
@@ -323,13 +323,20 @@ class AvatarPainter extends CustomPainter {
       case 'grin':
         final path = Path()
           ..moveTo(mc.dx - halfW * 1.2, mc.dy)
-          ..quadraticBezierTo(mc.dx, mc.dy + r * 0.2 * scale, mc.dx + halfW * 1.2, mc.dy);
+          ..quadraticBezierTo(
+            mc.dx,
+            mc.dy + r * 0.2 * scale,
+            mc.dx + halfW * 1.2,
+            mc.dy,
+          );
         canvas.drawPath(path, paint);
         // Teeth line
         canvas.drawLine(
           Offset(mc.dx - halfW * 0.6, mc.dy + r * 0.04 * scale),
           Offset(mc.dx + halfW * 0.6, mc.dy + r * 0.04 * scale),
-          Paint()..color = Colors.white..strokeWidth = 1.5,
+          Paint()
+            ..color = Colors.white
+            ..strokeWidth = 1.5,
         );
         break;
       case 'neutral':
@@ -342,13 +349,23 @@ class AvatarPainter extends CustomPainter {
       case 'gentle':
         final path = Path()
           ..moveTo(mc.dx - halfW * 0.8, mc.dy)
-          ..quadraticBezierTo(mc.dx, mc.dy + r * 0.08 * scale, mc.dx + halfW * 0.8, mc.dy);
+          ..quadraticBezierTo(
+            mc.dx,
+            mc.dy + r * 0.08 * scale,
+            mc.dx + halfW * 0.8,
+            mc.dy,
+          );
         canvas.drawPath(path, paint);
         break;
       default: // smile
         final path = Path()
           ..moveTo(mc.dx - halfW, mc.dy)
-          ..quadraticBezierTo(mc.dx, mc.dy + r * 0.15 * scale, mc.dx + halfW, mc.dy);
+          ..quadraticBezierTo(
+            mc.dx,
+            mc.dy + r * 0.15 * scale,
+            mc.dx + halfW,
+            mc.dy,
+          );
         canvas.drawPath(path, paint);
     }
   }
@@ -356,7 +373,12 @@ class AvatarPainter extends CustomPainter {
   // ═══════════════════════════════════════════════════════════════════════
   //  Hair (back layer — behind the head for styles that wrap around)
   // ═══════════════════════════════════════════════════════════════════════
-  void _drawHairBack(Canvas canvas, Size size, Color hairColor, HeadGeometry geo) {
+  void _drawHairBack(
+    Canvas canvas,
+    Size size,
+    Color hairColor,
+    HeadGeometry geo,
+  ) {
     final hairStyle = config['hairStyle'] ?? 'short_classic';
     final paint = Paint()..color = hairColor;
     final c = geo.center;
@@ -412,7 +434,12 @@ class AvatarPainter extends CustomPainter {
   // ═══════════════════════════════════════════════════════════════════════
   //  Hair (front layer — on top of the head)
   // ═══════════════════════════════════════════════════════════════════════
-  void _drawHairFront(Canvas canvas, Size size, Color hairColor, HeadGeometry geo) {
+  void _drawHairFront(
+    Canvas canvas,
+    Size size,
+    Color hairColor,
+    HeadGeometry geo,
+  ) {
     final hairStyle = config['hairStyle'] ?? 'short_classic';
     if (hairStyle == 'none') return;
 
@@ -427,7 +454,8 @@ class AvatarPainter extends CustomPainter {
     // Clips out the eye, nose, and mouth area so NO front hair, hat, or SVG asset
     // can ever occlude facial features, regardless of head shape or hairstyle.
     canvas.save();
-    final canvasRect = Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
+    final canvasRect = Path()
+      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
     final safeHairZone = Path.combine(
       PathOperation.difference,
       canvasRect,
@@ -439,7 +467,10 @@ class AvatarPainter extends CustomPainter {
       case 'buzz':
         // Conforming hair cap following upper head contour (translucent)
         final capPath = geo.getConformingHairCap(expansionScale: 1.03);
-        canvas.drawPath(capPath, paint..color = hairColor.withValues(alpha: 0.65));
+        canvas.drawPath(
+          capPath,
+          paint..color = hairColor.withValues(alpha: 0.65),
+        );
         paint.color = hairColor;
         break;
 
@@ -457,7 +488,12 @@ class AvatarPainter extends CustomPainter {
         // Accent part line
         final partLine = Path()
           ..moveTo(c.dx - hw * 0.4, foreheadY - r * 0.2)
-          ..quadraticBezierTo(c.dx + hw * 0.2, topY - r * 0.3, c.dx + hw * 0.9, foreheadY);
+          ..quadraticBezierTo(
+            c.dx + hw * 0.2,
+            topY - r * 0.3,
+            c.dx + hw * 0.9,
+            foreheadY,
+          );
         canvas.drawPath(
           partLine,
           Paint()
@@ -476,12 +512,32 @@ class AvatarPainter extends CustomPainter {
         final locksPath = Path();
         // Right side lock
         locksPath.moveTo(c.dx + hw * 0.8, foreheadY);
-        locksPath.quadraticBezierTo(c.dx + hw * 1.25, c.dy + r * 0.2, c.dx + hw * 0.9, c.dy + r * 0.6);
-        locksPath.quadraticBezierTo(c.dx + hw * 0.75, c.dy + r * 0.2, c.dx + hw * 0.8, foreheadY);
+        locksPath.quadraticBezierTo(
+          c.dx + hw * 1.25,
+          c.dy + r * 0.2,
+          c.dx + hw * 0.9,
+          c.dy + r * 0.6,
+        );
+        locksPath.quadraticBezierTo(
+          c.dx + hw * 0.75,
+          c.dy + r * 0.2,
+          c.dx + hw * 0.8,
+          foreheadY,
+        );
         // Left side lock
         locksPath.moveTo(c.dx - hw * 0.8, foreheadY);
-        locksPath.quadraticBezierTo(c.dx - hw * 1.25, c.dy + r * 0.2, c.dx - hw * 0.9, c.dy + r * 0.6);
-        locksPath.quadraticBezierTo(c.dx - hw * 0.75, c.dy + r * 0.2, c.dx - hw * 0.8, foreheadY);
+        locksPath.quadraticBezierTo(
+          c.dx - hw * 1.25,
+          c.dy + r * 0.2,
+          c.dx - hw * 0.9,
+          c.dy + r * 0.6,
+        );
+        locksPath.quadraticBezierTo(
+          c.dx - hw * 0.75,
+          c.dy + r * 0.2,
+          c.dx - hw * 0.8,
+          foreheadY,
+        );
         locksPath.close();
         canvas.drawPath(locksPath, paint);
         break;
@@ -493,9 +549,23 @@ class AvatarPainter extends CustomPainter {
 
         final strandsPath = Path();
         // Right strand
-        strandsPath.addRect(Rect.fromLTRB(c.dx + hw * 0.8, foreheadY, c.dx + hw * 1.2, c.dy + r * 0.9));
+        strandsPath.addRect(
+          Rect.fromLTRB(
+            c.dx + hw * 0.8,
+            foreheadY,
+            c.dx + hw * 1.2,
+            c.dy + r * 0.9,
+          ),
+        );
         // Left strand
-        strandsPath.addRect(Rect.fromLTRB(c.dx - hw * 1.2, foreheadY, c.dx - hw * 0.8, c.dy + r * 0.9));
+        strandsPath.addRect(
+          Rect.fromLTRB(
+            c.dx - hw * 1.2,
+            foreheadY,
+            c.dx - hw * 0.8,
+            c.dy + r * 0.9,
+          ),
+        );
         canvas.drawPath(strandsPath, paint);
         break;
 
@@ -507,12 +577,32 @@ class AvatarPainter extends CustomPainter {
         final wavyPath = Path();
         // Right wavy strand
         wavyPath.moveTo(c.dx + hw * 0.8, foreheadY);
-        wavyPath.quadraticBezierTo(c.dx + hw * 1.30, c.dy + r * 0.3, c.dx + hw * 0.95, c.dy + r * 0.95);
-        wavyPath.quadraticBezierTo(c.dx + hw * 0.70, c.dy + r * 0.3, c.dx + hw * 0.8, foreheadY);
+        wavyPath.quadraticBezierTo(
+          c.dx + hw * 1.30,
+          c.dy + r * 0.3,
+          c.dx + hw * 0.95,
+          c.dy + r * 0.95,
+        );
+        wavyPath.quadraticBezierTo(
+          c.dx + hw * 0.70,
+          c.dy + r * 0.3,
+          c.dx + hw * 0.8,
+          foreheadY,
+        );
         // Left wavy strand
         wavyPath.moveTo(c.dx - hw * 0.8, foreheadY);
-        wavyPath.quadraticBezierTo(c.dx - hw * 1.30, c.dy + r * 0.3, c.dx - hw * 0.95, c.dy + r * 0.95);
-        wavyPath.quadraticBezierTo(c.dx - hw * 0.70, c.dy + r * 0.3, c.dx - hw * 0.8, foreheadY);
+        wavyPath.quadraticBezierTo(
+          c.dx - hw * 1.30,
+          c.dy + r * 0.3,
+          c.dx - hw * 0.95,
+          c.dy + r * 0.95,
+        );
+        wavyPath.quadraticBezierTo(
+          c.dx - hw * 0.70,
+          c.dy + r * 0.3,
+          c.dx - hw * 0.8,
+          foreheadY,
+        );
         wavyPath.close();
         canvas.drawPath(wavyPath, paint);
         break;
@@ -533,11 +623,7 @@ class AvatarPainter extends CustomPainter {
         canvas.drawPath(capPath, paint);
         // Top bun circle (un-clipped)
         canvas.restore(); // restore before drawing bun on top of skull
-        canvas.drawCircle(
-          Offset(c.dx, topY - r * 0.30),
-          r * 0.35,
-          paint,
-        );
+        canvas.drawCircle(Offset(c.dx, topY - r * 0.30), r * 0.35, paint);
         return; // already restored
 
       default:
@@ -560,7 +646,10 @@ class AvatarPainter extends CustomPainter {
     if (item == null) return;
 
     final textPainter = TextPainter(
-      text: TextSpan(text: item.emoji, style: TextStyle(fontSize: geo.radius * 0.6)),
+      text: TextSpan(
+        text: item.emoji,
+        style: TextStyle(fontSize: geo.radius * 0.6),
+      ),
       textDirection: TextDirection.ltr,
     )..layout();
     textPainter.paint(
@@ -577,7 +666,9 @@ class AvatarPainter extends CustomPainter {
   // ═══════════════════════════════════════════════════════════════════════
   static Color _darken(Color color, double amount) {
     final hsl = HSLColor.fromColor(color);
-    return hsl.withLightness((hsl.lightness - amount).clamp(0.0, 1.0)).toColor();
+    return hsl
+        .withLightness((hsl.lightness - amount).clamp(0.0, 1.0))
+        .toColor();
   }
 
   @override

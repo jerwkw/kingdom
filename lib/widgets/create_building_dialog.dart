@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../config/limits.dart';
 import '../providers/building_provider.dart';
 
 class CreateBuildingDialog extends ConsumerStatefulWidget {
   const CreateBuildingDialog({super.key});
 
   @override
-  ConsumerState<CreateBuildingDialog> createState() => _CreateBuildingDialogState();
+  ConsumerState<CreateBuildingDialog> createState() =>
+      _CreateBuildingDialogState();
 }
 
 class _CreateBuildingDialogState extends ConsumerState<CreateBuildingDialog> {
@@ -21,7 +23,8 @@ class _CreateBuildingDialogState extends ConsumerState<CreateBuildingDialog> {
   void initState() {
     super.initState();
     // Default invite code suggestion
-    _codeController.text = 'GUILD${(1000 + (DateTime.now().millisecondsSinceEpoch % 9000))}';
+    _codeController.text =
+        'GUILD${(1000 + (DateTime.now().millisecondsSinceEpoch % 9000))}';
   }
 
   @override
@@ -40,7 +43,9 @@ class _CreateBuildingDialogState extends ConsumerState<CreateBuildingDialog> {
       _errorMessage = null;
     });
 
-    final err = await ref.read(buildingNotifierProvider.notifier).createBuilding(
+    final err = await ref
+        .read(buildingNotifierProvider.notifier)
+        .createBuilding(
           name: _nameController.text.trim(),
           description: _descriptionController.text.trim(),
           inviteCode: _codeController.text.trim(),
@@ -50,7 +55,9 @@ class _CreateBuildingDialogState extends ConsumerState<CreateBuildingDialog> {
       if (err == null) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('🎉 Neighbourhood created successfully!')),
+          const SnackBar(
+            content: Text('🎉 Neighbourhood created successfully!'),
+          ),
         );
       } else {
         setState(() {
@@ -68,7 +75,10 @@ class _CreateBuildingDialogState extends ConsumerState<CreateBuildingDialog> {
       title: const Row(
         children: [
           Text('🏰 ', style: TextStyle(fontSize: 24)),
-          Text('Create Neighbourhood', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          Text(
+            'Create Neighbourhood',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
         ],
       ),
       content: SingleChildScrollView(
@@ -94,12 +104,19 @@ class _CreateBuildingDialogState extends ConsumerState<CreateBuildingDialog> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.error_outline, color: Colors.red, size: 20),
+                      const Icon(
+                        Icons.error_outline,
+                        color: Colors.red,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           _errorMessage!,
-                          style: const TextStyle(color: Colors.red, fontSize: 12),
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 12,
+                          ),
                         ),
                       ),
                     ],
@@ -108,22 +125,26 @@ class _CreateBuildingDialogState extends ConsumerState<CreateBuildingDialog> {
               ],
               TextFormField(
                 controller: _nameController,
+                maxLength: TextLimits.buildingName,
                 decoration: const InputDecoration(
                   labelText: 'Neighbourhood Name *',
                   hintText: 'e.g. Grace Fellowship Group',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.home_work),
                 ),
-                validator: (val) =>
-                    (val == null || val.trim().isEmpty) ? 'Please enter a name' : null,
+                validator: (val) => (val == null || val.trim().isEmpty)
+                    ? 'Please enter a name'
+                    : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _descriptionController,
                 maxLines: 2,
+                maxLength: TextLimits.buildingDescription,
                 decoration: const InputDecoration(
                   labelText: 'Description / Mission (Optional)',
-                  hintText: 'e.g. Young adult fellowship praying & growing together.',
+                  hintText:
+                      'e.g. Young adult fellowship praying & growing together.',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.notes),
                 ),
@@ -132,16 +153,25 @@ class _CreateBuildingDialogState extends ConsumerState<CreateBuildingDialog> {
               TextFormField(
                 controller: _codeController,
                 textCapitalization: TextCapitalization.characters,
+                maxLength: TextLimits.inviteCodeMax,
                 decoration: const InputDecoration(
                   labelText: 'Unique Invite Code *',
                   hintText: 'e.g. KINGDOM2026',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.vpn_key),
-                  helperText: 'Share this code for members to join.',
+                  helperText:
+                      'Letters and digits only. Share it for members to join.',
                 ),
                 validator: (val) {
-                  if (val == null || val.trim().isEmpty) return 'Please enter an invite code';
-                  if (val.trim().length < 4) return 'Invite code must be at least 4 characters';
+                  if (val == null || val.trim().isEmpty) {
+                    return 'Please enter an invite code';
+                  }
+                  if (val.trim().length < 4) {
+                    return 'Invite code must be at least 4 characters';
+                  }
+                  if (!RegExp(r'^[A-Za-z0-9]+$').hasMatch(val.trim())) {
+                    return 'Use letters and digits only';
+                  }
                   return null;
                 },
               ),
@@ -159,13 +189,18 @@ class _CreateBuildingDialogState extends ConsumerState<CreateBuildingDialog> {
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.teal.shade700,
             foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
           child: _isLoading
               ? const SizedBox(
                   width: 18,
                   height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
                 )
               : const Text('Create'),
         ),

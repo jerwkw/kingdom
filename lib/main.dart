@@ -29,9 +29,12 @@ void main() async {
       }
     }
 
-    // Automatically connect to local Firebase Emulators when running on localhost
-    if (kIsWeb && (Uri.base.host == 'localhost' || Uri.base.host == '127.0.0.1')) {
-      debugPrint('[Firebase]: Localhost detected. Connecting to local Firebase Emulators...');
+    // Emulator use is opt-in so localhost can also exercise the real project.
+    const useFirebaseEmulators = bool.fromEnvironment('USE_FIREBASE_EMULATORS');
+    if (useFirebaseEmulators) {
+      debugPrint(
+        '[Firebase]: Localhost detected. Connecting to local Firebase Emulators...',
+      );
       try {
         await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
         FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
@@ -55,7 +58,8 @@ class KingdomApp extends ConsumerWidget {
     final userProfileAsync = ref.watch(userProfileProvider);
 
     // Get current authenticated user (with fallback to FirebaseAuth singleton instance)
-    final currentUser = authState.value ?? ref.read(authInstanceProvider).currentUser;
+    final currentUser =
+        authState.value ?? ref.read(authInstanceProvider).currentUser;
 
     return MaterialApp(
       title: 'Kingdom — Church Accountability App',
@@ -81,7 +85,7 @@ class KingdomApp extends ConsumerWidget {
             if (profile != null || previousProfile != null) {
               return const MainShell();
             }
-            // User signed in but profile/role not set up yet
+            // User signed in but profile not set up yet
             return const OnboardingScreen();
           },
           loading: () {
@@ -96,9 +100,7 @@ class KingdomApp extends ConsumerWidget {
             if (previousProfile != null) {
               return const MainShell();
             }
-            return Scaffold(
-              body: Center(child: Text('Profile Error: $err')),
-            );
+            return Scaffold(body: Center(child: Text('Profile Error: $err')));
           },
         );
       }(),

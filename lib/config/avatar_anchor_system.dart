@@ -152,7 +152,12 @@ class HeadGeometry {
     capPath.addPath(expandedUpper, Offset.zero);
     // Cap bottom of hair at forehead line
     capPath.lineTo(center.dx + hairHalfWidth * expansionScale, foreheadY);
-    capPath.quadraticBezierTo(center.dx, foreheadY - radius * 0.12, center.dx - hairHalfWidth * expansionScale, foreheadY);
+    capPath.quadraticBezierTo(
+      center.dx,
+      foreheadY - radius * 0.12,
+      center.dx - hairHalfWidth * expansionScale,
+      foreheadY,
+    );
     capPath.close();
 
     return capPath;

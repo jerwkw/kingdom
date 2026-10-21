@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class UserModel {
   final String uid;
   final String name;
-  final String role;
   final String? buildingId;
   final int fishBalance;
   final Map<String, String> avatarConfig; // headpiece, shirt, pants, companion
@@ -12,7 +11,6 @@ class UserModel {
   UserModel({
     required this.uid,
     required this.name,
-    required this.role,
     this.buildingId,
     required this.fishBalance,
     required this.avatarConfig,
@@ -41,7 +39,6 @@ class UserModel {
     return UserModel(
       uid: uid,
       name: map['name'] ?? 'Church Member',
-      role: map['role'] ?? 'gardener',
       buildingId: map['buildingId'],
       fishBalance: (map['fishBalance'] as num?)?.toInt() ?? 0,
       avatarConfig: parsedAvatar,
@@ -52,7 +49,6 @@ class UserModel {
   Map<String, dynamic> toMap() {
     return {
       'name': name,
-      'role': role,
       'buildingId': buildingId,
       'fishBalance': fishBalance,
       'avatarConfig': avatarConfig,
@@ -62,7 +58,6 @@ class UserModel {
 
   UserModel copyWith({
     String? name,
-    String? role,
     String? buildingId,
     int? fishBalance,
     Map<String, String>? avatarConfig,
@@ -70,7 +65,6 @@ class UserModel {
     return UserModel(
       uid: uid,
       name: name ?? this.name,
-      role: role ?? this.role,
       buildingId: buildingId ?? this.buildingId,
       fishBalance: fishBalance ?? this.fishBalance,
       avatarConfig: avatarConfig ?? this.avatarConfig,

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum GoalType { smart, templated }
+
 enum GoalFrequency { daily, weekly, monthly }
 
 class GoalModel {
@@ -12,8 +13,9 @@ class GoalModel {
   final GoalFrequency frequency;
   final int currentStreak;
   final bool sharedToBulletin;
+  final bool archived;
   final DateTime? createdAt;
-  final bool isCompletedToday; // Derived state for UI
+  final bool isCompletedToday; // Derived: completed in the current period
 
   GoalModel({
     required this.id,
@@ -24,11 +26,16 @@ class GoalModel {
     required this.frequency,
     required this.currentStreak,
     required this.sharedToBulletin,
+    this.archived = false,
     this.createdAt,
     this.isCompletedToday = false,
   });
 
-  factory GoalModel.fromMap(String id, Map<String, dynamic> map, {bool isCompletedToday = false}) {
+  factory GoalModel.fromMap(
+    String id,
+    Map<String, dynamic> map, {
+    bool isCompletedToday = false,
+  }) {
     DateTime? parsedCreatedAt;
     final rawCreatedAt = map['createdAt'];
     if (rawCreatedAt is Timestamp) {
@@ -48,6 +55,7 @@ class GoalModel {
       frequency: _parseFrequency(map['frequency']),
       currentStreak: (map['currentStreak'] as num?)?.toInt() ?? 0,
       sharedToBulletin: map['sharedToBulletin'] ?? false,
+      archived: map['archived'] == true,
       createdAt: parsedCreatedAt,
       isCompletedToday: isCompletedToday,
     );
@@ -62,6 +70,7 @@ class GoalModel {
       'frequency': frequency.name,
       'currentStreak': currentStreak,
       'sharedToBulletin': sharedToBulletin,
+      'archived': archived,
       'createdAt': createdAt,
     };
   }
@@ -77,9 +86,13 @@ class GoalModel {
     }
   }
 
+  /// The text shown on the card: SMART goals show their private text.
+  String get displayText => type == GoalType.smart ? text : task;
+
   GoalModel copyWith({
     int? currentStreak,
     bool? sharedToBulletin,
+    bool? archived,
     bool? isCompletedToday,
   }) {
     return GoalModel(
@@ -91,6 +104,7 @@ class GoalModel {
       frequency: frequency,
       currentStreak: currentStreak ?? this.currentStreak,
       sharedToBulletin: sharedToBulletin ?? this.sharedToBulletin,
+      archived: archived ?? this.archived,
       createdAt: createdAt,
       isCompletedToday: isCompletedToday ?? this.isCompletedToday,
     );

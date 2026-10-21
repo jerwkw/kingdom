@@ -4,6 +4,7 @@ import '../config/store_config.dart';
 import '../providers/auth_provider.dart';
 import '../providers/store_provider.dart';
 import '../widgets/avatar_renderer.dart';
+import '../widgets/notification_bell.dart';
 
 class StoreTab extends ConsumerStatefulWidget {
   const StoreTab({super.key});
@@ -45,7 +46,6 @@ class _StoreTabState extends ConsumerState<StoreTab> {
                   ),
                   const SizedBox(height: 16),
                   AvatarRenderer(
-                    roleId: userProfile.role,
                     avatarConfig: userProfile.avatarConfig,
                     size: 110,
                   ),
@@ -54,33 +54,65 @@ class _StoreTabState extends ConsumerState<StoreTab> {
                     alignment: Alignment.centerLeft,
                     child: Text(
                       'Equip Owned Cosmetics',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
                   Expanded(
                     child: ownedItems.isEmpty
                         ? const Center(
-                            child: Text('No owned cosmetics yet. Earn fish by completing goals!'),
+                            child: Text(
+                              'No owned cosmetics yet. Earn fish by completing goals!',
+                            ),
                           )
                         : ListView.builder(
                             itemCount: ownedItems.length,
                             itemBuilder: (context, index) {
                               final item = ownedItems[index];
-                              final isEquipped = userProfile.avatarConfig[item.category.name] == item.id;
+                              final isEquipped =
+                                  userProfile.avatarConfig[item
+                                      .category
+                                      .name] ==
+                                  item.id;
 
                               return ListTile(
-                                leading: Text(item.emoji, style: const TextStyle(fontSize: 28)),
-                                title: Text(item.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                subtitle: Text(item.category.name.toUpperCase()),
+                                leading: Text(
+                                  item.emoji,
+                                  style: const TextStyle(fontSize: 28),
+                                ),
+                                title: Text(
+                                  item.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  item.category.name.toUpperCase(),
+                                ),
                                 trailing: ElevatedButton(
-                                  onPressed: () {
-                                    ref.read(storeNotifierProvider.notifier).equipItem(item);
+                                  onPressed: () async {
+                                    final err = await ref
+                                        .read(storeNotifierProvider.notifier)
+                                        .equipItem(item);
+                                    if (err != null && context.mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(content: Text(err)),
+                                      );
+                                    }
                                   },
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: isEquipped ? Colors.green : Colors.indigo,
+                                    backgroundColor: isEquipped
+                                        ? Colors.green
+                                        : Colors.indigo,
                                   ),
-                                  child: Text(isEquipped ? 'Equipped ✓' : 'Equip'),
+                                  child: Text(
+                                    isEquipped ? 'Equipped ✓' : 'Equip',
+                                  ),
                                 ),
                               );
                             },
@@ -108,8 +140,12 @@ class _StoreTabState extends ConsumerState<StoreTab> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cosmetic Store', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Cosmetic Store',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         actions: [
+          const NotificationBell(),
           IconButton(
             icon: const Icon(Icons.checkroom),
             tooltip: 'Fitting Room',
@@ -137,7 +173,10 @@ class _StoreTabState extends ConsumerState<StoreTab> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Fish Balance', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                    const Text(
+                      'Fish Balance',
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                    ),
                     Text(
                       '$fishBalance Fish',
                       style: const TextStyle(
@@ -175,7 +214,9 @@ class _StoreTabState extends ConsumerState<StoreTab> {
                     label: Text(cat.name.toUpperCase()),
                     selected: isSelected,
                     selectedColor: Colors.indigo,
-                    labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black),
+                    labelStyle: TextStyle(
+                      color: isSelected ? Colors.white : Colors.black,
+                    ),
                     onSelected: (_) => setState(() => _selectedCategory = cat),
                   ),
                 );
@@ -200,7 +241,9 @@ class _StoreTabState extends ConsumerState<StoreTab> {
                 final isOwned = ownedItemIds.contains(item.id);
 
                 return Card(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   elevation: 3,
                   child: Padding(
                     padding: const EdgeInsets.all(12.0),
@@ -212,12 +255,18 @@ class _StoreTabState extends ConsumerState<StoreTab> {
                         Text(
                           item.name,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           '${item.cost} 🐟',
-                          style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            color: Colors.amber,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(height: 12),
                         SizedBox(
@@ -231,24 +280,38 @@ class _StoreTabState extends ConsumerState<StoreTab> {
                                         .purchaseItem(item);
                                     if (context.mounted) {
                                       if (err != null) {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(SnackBar(content: Text(err)));
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(content: Text(err)),
+                                        );
                                       } else {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(content: Text('Purchased ${item.name}!')),
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Purchased ${item.name}!',
+                                            ),
+                                          ),
                                         );
                                       }
                                     }
                                   },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: isOwned ? Colors.grey : Colors.indigo,
+                              backgroundColor: isOwned
+                                  ? Colors.grey
+                                  : Colors.indigo,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
                             ),
                             child: Text(
                               isOwned ? 'Owned' : 'Buy Item',
-                              style: const TextStyle(color: Colors.white, fontSize: 12),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
                             ),
                           ),
                         ),

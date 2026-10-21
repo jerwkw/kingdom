@@ -10,7 +10,6 @@ class StoreItemConfig {
   final String emoji;
   final IconData icon;
   final Color color;
-  final String? roleRestricted;
 
   const StoreItemConfig({
     required this.id,
@@ -20,7 +19,6 @@ class StoreItemConfig {
     required this.emoji,
     required this.icon,
     required this.color,
-    this.roleRestricted,
   });
 }
 
