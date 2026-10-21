@@ -1,117 +1,102 @@
-# Pure Firebase Deployment Guide (Cloud Functions + Hosting + Firestore)
+# Firebase Deployment Guide
 
-This guide walks you through deploying the entire **Kingdom** application purely on Google Cloud Infrastructure using Firebase — **no Raspberry Pi or separate server setup required**.
+Firebase is Kingdom's supported production platform. The Raspberry Pi backend is archived.
 
----
+## Prerequisites
 
-## 🏗️ Architecture Overview
+- Flutter SDK compatible with `pubspec.yaml`.
+- Node.js 22 and Java for the Firestore emulator.
+- Firebase project with Authentication, Firestore, Functions, and Hosting enabled.
+- Google sign-in enabled with localhost and the Hosting domain authorized.
+- Billing enabled for Functions, with budget alerts and appropriate project access controls.
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                   Firebase Hosting                          │
-│          Serves Flutter Web App (CDN global)                │
-└──────────────────────────────┬──────────────────────────────┘
-                               │ /api/** rewrites
-                               ▼
-┌─────────────────────────────────────────────────────────────┐
-│               Firebase Cloud Functions                      │
-│   • Node.js 18 API (completeGoal, purchaseItem, etc.)      │
-│   • Daily Challenge Scheduled Cron (1 0 * * * UTC)          │
-└──────────────────────────────┬──────────────────────────────┘
-                               │ Admin SDK
-                               ▼
-┌─────────────────────────────────────────────────────────────┐
-│                 Cloud Firestore Database                    │
-│   • Enforces firestore.rules for direct client reads        │
-│   • Atomic transactions for fish balances & group funds     │
-└─────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 📋 Prerequisites
-
-1. **Node.js** (v18 or higher installed on your dev laptop)
-2. **Flutter SDK**
-3. **Firebase Account & Project** (created at [console.firebase.google.com](https://console.firebase.google.com))
-
----
-
-## 🚀 Step-by-Step Deployment Instructions
-
-### Step 1: Install Functions Dependencies
-
-Navigate to the `functions/` directory and install dependencies:
+## Install and select the project
 
 ```bash
+flutter pub get
 cd functions
 npm install
 cd ..
+npx --prefix functions firebase login
+npx --prefix functions firebase use <project-id>
 ```
 
-### Step 2: Authenticate Firebase CLI
+Confirm the active project before every production deployment.
 
-Log into your Firebase account from your laptop terminal:
-
-```bash
-npx -y firebase-tools@latest login
-```
-
-Select your active Firebase Project ID:
+## Verify before deployment
 
 ```bash
-npx -y firebase-tools@latest use <YOUR_FIREBASE_PROJECT_ID>
-```
-
-*(If you don't have a project created yet, run `npx -y firebase-tools@latest projects:create kingdom-app`)*
-
----
-
-### Step 3: Build the Flutter Web Application
-
-Build the static production web assets:
-
-```bash
-export PATH="/Users/jeremywong/flutter/bin:$PATH"  # or your flutter path
+flutter analyze
+flutter test
 flutter build web
+cd functions
+npm test
+npm run test:rules
+npm run test:integration
+cd ..
 ```
 
-This generates the web build inside `build/web/`.
+Do not deploy if a command fails. Rule and integration tests require the emulators (Java) and may download emulator artifacts on first use. The same checks run in `.github/workflows/ci.yml`; mark both CI jobs as required status checks in the GitHub branch protection settings for `main`.
 
----
+## Configuration
 
-### Step 4: Deploy Everything to Firebase in One Command
+- **CORS**: the API allows the project's `*.web.app` / `*.firebaseapp.com` origins by default (see `functions/index.js`). For a different project or custom domain, set a comma-separated `ALLOWED_ORIGINS` in `functions/.env.<project-id>` (not committed if it contains anything private).
+- **Rate-limit TTL**: `firestore.indexes.json` declares a TTL policy on `rateLimits.expiresAt`; deploying indexes enables it. Confirm it in the console under Firestore → TTL.
 
-Deploy Firestore Security Rules, Cloud Functions, and Firebase Hosting together:
+## Deployment order
 
 ```bash
-npx -y firebase-tools@latest deploy
+npx --prefix functions firebase deploy --only firestore:rules,firestore:indexes
+npx --prefix functions firebase deploy --only functions
+npx --prefix functions firebase deploy --only hosting
 ```
 
-*(Or deploy specific components individually if needed:)*
-- **Cloud Functions only**: `npx -y firebase-tools@latest deploy --only functions`
-- **Hosting only**: `npx -y firebase-tools@latest deploy --only hosting`
-- **Firestore rules only**: `npx -y firebase-tools@latest deploy --only firestore:rules`
+Hosting serves `build/web` and rewrites `/api/**` to the authenticated `api` function.
 
----
+### Release that removes roles and adds notifications/achievements
 
-## 🛠️ Local Testing / Emulator (Optional)
+Older clients write `role`, create bulletin posts directly and equip items by editing `avatarConfig`; the new rules refuse all three. The new client works against the old rules, so for this release deploy in this order instead:
 
-You can run the entire stack locally using the official Firebase Emulators before deploying:
+1. `firestore:indexes`, then wait until the new `notifications` and `bulletinPosts` indexes finish building.
+2. `functions` (adds `equipItem`, `createBulletinPost`, `ensureDailyChallenge` and the `goalScheduleSync` trigger).
+3. `hosting`.
+4. `firestore:rules`.
+5. One-off data scripts, dry run first (they need Application Default Credentials for the project):
+
+   ```bash
+   cd functions
+   GOOGLE_CLOUD_PROJECT=<project-id> node scripts/remove-legacy-role.js          # dry run
+   GOOGLE_CLOUD_PROJECT=<project-id> node scripts/remove-legacy-role.js --apply
+   GOOGLE_CLOUD_PROJECT=<project-id> node scripts/backfill-achievements.js       # dry run
+   GOOGLE_CLOUD_PROJECT=<project-id> node scripts/backfill-achievements.js --apply
+   ```
+
+   Both are idempotent. Backfilled achievements have no unlock date and are shown as "date unknown".
+
+## Post-deployment checks
+
+Using two non-production test accounts:
+
+1. Sign in and complete onboarding.
+2. Create daily, weekly, and monthly goals; confirm each rewards only once per period.
+3. Create a neighbourhood, request access from account two, and approve it.
+4. Confirm an outsider cannot retrieve statistics or react to its bulletin.
+5. Purchase a known cosmetic and verify the amount matches the server catalog.
+6. Complete a daily reflection and verify one completion, one balance increment, and one fund contribution.
+7. Deposit fish from account one; confirm account two gets one notification, the bell badge updates live, and opening it marks it read and opens the guild.
+8. Cross an achievement threshold; confirm it appears once in the guild history with its date.
+9. Tick a goal; confirm the checkbox shows progress, then stays checked after reload.
+10. Inspect Functions logs (structured, with `requestId`) for authorization or transaction errors.
+
+## Local emulators
 
 ```bash
-npx -y firebase-tools@latest emulators:start
+npx --prefix functions firebase emulators:start
+flutter run -d chrome --dart-define=USE_FIREBASE_EMULATORS=true
 ```
 
-This starts:
-- Local Firestore Emulator on port `8080`
-- Local Cloud Functions Emulator on port `5001`
-- Local Hosting Emulator on port `5000`
+Without the build flag, localhost uses deployed Firebase services.
 
----
+## Rollback
 
-## 🔒 Security Summary
-
-- **Client Reads**: Secured by `firestore.rules` (only user's own goals & completed records can be read/modified directly).
-- **Client Writes**: Restricted — clients cannot modify their fish balances or group fund directly.
-- **Privileged Operations**: Handled strictly via authenticated Firebase Cloud Functions (`api` endpoint) using Firebase ID Tokens.
+For a security or economy regression, roll back Hosting and Functions using Firebase release history and redeploy the last known-good rules immediately. Never loosen rules as an availability workaround.
