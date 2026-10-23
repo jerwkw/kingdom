@@ -1,11 +1,11 @@
 # Kingdom implementation TODO
 
-Last reviewed: 2026-10-23. Closed items and their details live in [ARCHIVE.md](ARCHIVE.md). This file lives on the docs-only `documentation` branch; from a code worktree, find it with `tool/docs.sh`.
+Last reviewed: 2026-10-23. Closed items and their details live in [ARCHIVE.md](ARCHIVE.md). This file lives on the docs-only `documentation` branch (find it with `tool/docs.sh`). Items done on an unmerged branch are marked _(in progress: branch)_ and close only when merged into `main`.
 
 ## Status
 
 - **2026-10-21 pass:** all code-side P0, the user-feedback follow-ups, most of P1 and part of P2 done (route split, transactional membership, error codes, rate limits, fund ledger, achievements, notifications, server-side equip, role removal, CI). Committed; deployed to staging only.
-- **Deploy order for this release:** indexes → functions → hosting → rules, then `functions/scripts/remove-legacy-role.js` and `backfill-achievements.js` (both only run against the emulator so far). Older clients break under the new rules. See [FIREBASE_DEPLOYMENT_GUIDE.md](../FIREBASE_DEPLOYMENT_GUIDE.md).
+- **Deploy order for this release:** indexes → functions → hosting → rules, then `functions/scripts/remove-legacy-role.js` and `backfill-achievements.js` (both only run against the emulator so far). Older clients break under the new rules. See `FIREBASE_DEPLOYMENT_GUIDE.md` (code branches).
 
 ### Decisions to confirm
 
@@ -28,7 +28,7 @@ Last reviewed: 2026-10-23. Closed items and their details live in [ARCHIVE.md](A
 Done: staging project `church-app-staging-f8a55` created with a web app; `.firebaserc` aliases (`staging` default, `prod`); web config chosen by `--dart-define=FIREBASE_ENV`; CORS derived from the deploying project. Production (`church-app-f8a55`) still runs the pre-pass build from 2026-07-28.
 
 - Staging console setup done and release deployed to staging on 2026-10-23 (indexes → functions → hosting → rules); new routes answer 401 unauthenticated at https://church-app-staging-f8a55.web.app. Google OAuth consent screen is in Testing — add testers under Google Auth Platform → Audience.
-- [ ] Run the two-account checks in [FIREBASE_DEPLOYMENT_GUIDE.md](../FIREBASE_DEPLOYMENT_GUIDE.md) against that environment.
+- [ ] Run the two-account checks in `FIREBASE_DEPLOYMENT_GUIDE.md` (code branches) against that environment.
 - [ ] Confirm Google sign-in works from the final Hosting domain and that all authorized domains are configured.
 - [ ] Configure Firebase budget alerts, Cloud Functions logs/alerts, and least-privilege Firebase project access.
 - [ ] Enable and enforce Firebase App Check for web before distributing broadly.
@@ -62,7 +62,11 @@ Done: schedule-based stats targets, `memberActivity` aggregates, fund ledger, go
 
 ## P2 — engineering quality and operations
 
-Done: CI on Node 22 for all suites, unit/parity tests, structured logging, `functions/index.js` route split, tag-based release process (`CHANGELOG.md`, `tool/release-check.sh`, deploy workflows; see "Releasing" in the guide), local CI parity for agents/branches (`tool/check.sh`, `.nvmrc`, pre-push hook, agent rules in `CLAUDE.md`), docs moved to the `documentation` branch/worktree (`tool/docs.sh`).
+Done: CI on Node 22 for all suites, unit/parity tests, structured logging, `functions/index.js` route split.
+
+- [ ] Add a release checklist and versioning/changelog process. _(in progress: ci/release-workflows)_ — tag-based releases (`CHANGELOG.md`, `tool/release-check.sh`, staging/prod deploy workflows, "Releasing" in the guide).
+- [ ] Local CI parity for work branches and agents. _(in progress: ci/release-workflows)_ — `tool/check.sh`, `.nvmrc`, pre-push hook, agent rules in `CLAUDE.md`.
+- [ ] Docs split for worktrees. _(in progress: ci/release-workflows)_ — status (TODO/ARCHIVE) on the `documentation` branch via `tool/docs.sh`; code docs stay with the code; PR template.
 
 - [ ] Add browser smoke tests and an accessibility pass (keyboard flow, semantic labels, contrast, text scaling, reduced motion).
 - [ ] Define Firestore backup/export, restore, retention, and incident-response procedures.
