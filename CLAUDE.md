@@ -4,13 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Kingdom is a web-first Flutter accountability app for a church cell group: private spiritual goals, daily reflections, a cosmetic currency ("fish"), avatars, shared neighbourhoods ("buildings") and a bulletin board. Backend is Firebase (Auth with Google sign-in, Firestore, Cloud Functions, Hosting). `server/` is an archived Raspberry Pi backend — not part of the supported workflow; don't modify it unless asked. `TODO.md` tracks known gaps and pilot-readiness work.
+Kingdom is a web-first Flutter accountability app for a church cell group: private spiritual goals, daily reflections, a cosmetic currency ("fish"), avatars, shared neighbourhoods ("buildings") and a bulletin board. Backend is Firebase (Auth with Google sign-in, Firestore, Cloud Functions, Hosting). `server/` is an archived Raspberry Pi backend — not part of the supported workflow; don't modify it unless asked. `docs/TODO.md` on the `documentation` branch tracks known gaps and pilot-readiness work.
 
 ## Instructions
 
-At the start of a session, refer to docs/TODO.md for a summary of past session changes and pending action items. During the session, once an item is closed, reduce it to a one liner update about the completion and shift the relevant information to docs/ARCHIVE.md. The TODO.md should remain as lightweight as possible
+Project documentation — `docs/TODO.md`, `docs/ARCHIVE.md` and `FIREBASE_DEPLOYMENT_GUIDE.md` — lives only on the docs-only `documentation` branch, checked out in its own worktree so every code worktree shares one copy. Get its path with `docs="$(tool/docs.sh)"` (creates `<main checkout>-docs` if no worktree has the branch). Never check out `documentation` in a code worktree: git refuses a branch that is checked out elsewhere, and switching would strand your work.
 
-- Only read ARCHIVE.md when necessary, otherwise the shifted information can just be appended to the back.
+- At the start of a session, read `"$docs"/docs/TODO.md` for a summary of past session changes and pending action items.
+- Once an item is closed, reduce it to a one-line completion note in TODO.md and append the details to the end of `"$docs"/docs/ARCHIVE.md`. Keep TODO.md as lightweight as possible; only read ARCHIVE.md when necessary.
+- After every successful change (committed on your work branch with `tool/check.sh` passing), update the affected docs in the docs worktree and commit them on `documentation` right away: `git -C "$docs" add <files you changed> && git -C "$docs" commit -m "<what changed>"`. Stage only your own files, since other worktrees may be editing at the same time; if the commit fails on `index.lock`, retry.
 
 ## Commands
 
@@ -36,7 +38,7 @@ node --test --test-name-pattern "<name>" test/domain.test.js   # single backend 
 node scripts/<name>.js [--apply]                    # one-off Admin SDK migrations; dry run unless --apply
 ```
 
-Deploy (see `FIREBASE_DEPLOYMENT_GUIDE.md` for order and post-deploy checks): rules/indexes → functions → hosting, via `npx --prefix functions firebase deploy --only <target>`. Firebase CLI is a devDependency of `functions/`, hence `--prefix functions`. `.firebaserc` aliases: `staging` (default, `church-app-staging-f8a55`) and `prod` (`church-app-f8a55`); build web with `--dart-define=FIREBASE_ENV=staging` for staging. `tool/deploy.sh <alias>` deploys a built `build/web` in release order. CI: PRs run `ci.yml`; pushes to `main` deploy staging; `vX.Y.Z` tags deploy prod after `tool/release-check.sh` guards and approval ("Releasing" in the guide; `CHANGELOG.md` and `pubspec.yaml` version must match the tag).
+Deploy (see `FIREBASE_DEPLOYMENT_GUIDE.md` (on the `documentation` branch) for order and post-deploy checks): rules/indexes → functions → hosting, via `npx --prefix functions firebase deploy --only <target>`. Firebase CLI is a devDependency of `functions/`, hence `--prefix functions`. `.firebaserc` aliases: `staging` (default, `church-app-staging-f8a55`) and `prod` (`church-app-f8a55`); build web with `--dart-define=FIREBASE_ENV=staging` for staging. `tool/deploy.sh <alias>` deploys a built `build/web` in release order. CI: PRs run `ci.yml`; pushes to `main` deploy staging; `vX.Y.Z` tags deploy prod after `tool/release-check.sh` guards and approval ("Releasing" in the deployment guide; `CHANGELOG.md` and `pubspec.yaml` version must match the tag).
 
 ## Architecture
 

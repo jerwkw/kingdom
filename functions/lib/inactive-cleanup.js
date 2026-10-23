@@ -1,7 +1,7 @@
 const { db } = require('./firebase');
 
 // NOT SCHEDULED. Retained pending a data-retention decision for inactive
-// neighbourhoods (see TODO.md). Do not export from index.js without notice,
+// neighbourhoods (see docs/TODO.md on the documentation branch). Do not export from index.js without notice,
 // retention and recovery rules.
 async function cleanupInactiveBuildings() {
   try {

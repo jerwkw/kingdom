@@ -3,7 +3,7 @@
 # Firebase alias, in the default release order: indexes -> functions -> hosting
 # -> rules. Rules go last because the new client works against the old rules but
 # old clients may break under the new ones. Releases that need another order are
-# deployed by hand (FIREBASE_DEPLOYMENT_GUIDE.md).
+# deployed by hand (FIREBASE_DEPLOYMENT_GUIDE.md on the documentation branch).
 #
 #   flutter build web --dart-define=FIREBASE_ENV=staging && tool/deploy.sh staging
 #   flutter build web && tool/deploy.sh prod
