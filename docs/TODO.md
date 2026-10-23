@@ -40,7 +40,7 @@ Done: staging project `church-app-staging-f8a55` created with a web app; `.fireb
 Done: race-safe membership transactions, emulator integration tests for every route, string limits, rate limits, error codes, CORS.
 
 - [ ] Prod deploys by manually running `deploy-prod.yml` on a tag (free private repo: no environments or branch protection); pre-push hook fixed for worktrees. _(in progress: ci/manual-prod-deploy)_
-- [ ] Repo pushed to `github.com/jerwkw/kingdom` (private, free plan) on 2026-10-23. Remaining: do the "One-time GitHub and Google Cloud setup" in the deployment guide (environments, branch protection requiring PRs + `flutter`/`functions` checks, Workload Identity Federation deployers, prod cleanup policy). Workflows are written and linted but have never run on GitHub.
+- [ ] Repo pushed to `github.com/jerwkw/kingdom` (private, free plan) on 2026-10-23. Remaining: do the "One-time GitHub and Google Cloud setup" in the deployment guide (repository variables, Workload Identity Federation deployers with the attribute conditions given there, prod cleanup policy). Until then the deploy step of every `main` push fails at auth (CI part runs).
 
 ## User-feedback acceptance checks
 
