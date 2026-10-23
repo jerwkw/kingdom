@@ -1,8 +1,9 @@
 name: Deploy
 
 # Reusable: builds the web app for one Firebase alias and runs tool/deploy.sh.
-# Credentials come from Workload Identity Federation; GCP_WIF_PROVIDER and
-# GCP_DEPLOY_SERVICE_ACCOUNT are variables on the matching GitHub environment.
+# Credentials come from Workload Identity Federation via the repository variables
+# STAGING_/PROD_GCP_WIF_PROVIDER and STAGING_/PROD_GCP_DEPLOY_SERVICE_ACCOUNT.
+# Each provider's attribute condition decides which workflow runs it trusts.
 on:
   workflow_call:
     inputs:
@@ -10,15 +11,10 @@ on:
         description: Firebase alias from .firebaserc (staging or prod)
         required: true
         type: string
-      environment:
-        description: GitHub environment holding the credentials and protection rules
-        required: true
-        type: string
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
     permissions:
       contents: read
       id-token: write
@@ -38,8 +34,8 @@ jobs:
         working-directory: functions
       - uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
-          service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ inputs.alias == 'prod' && vars.PROD_GCP_WIF_PROVIDER || vars.STAGING_GCP_WIF_PROVIDER }}
+          service_account: ${{ inputs.alias == 'prod' && vars.PROD_GCP_DEPLOY_SERVICE_ACCOUNT || vars.STAGING_GCP_DEPLOY_SERVICE_ACCOUNT }}
       - run: flutter pub get
       - name: Build web
         env:

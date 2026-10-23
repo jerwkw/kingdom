@@ -85,23 +85,27 @@ Older clients write `role`, create bulletin posts directly and equip items by ed
 
 ## Releasing
 
-Work lands on `main` only through pull requests that pass CI (`flutter` and `functions` jobs). Every push to `main` deploys to staging (`.github/workflows/deploy-staging.yml`). Production deploys only from a `vMAJOR.MINOR.PATCH` tag (`deploy-prod.yml`).
+Work lands on `main` only through pull requests that pass CI (`flutter` and `functions` jobs). Every push to `main` deploys to staging (`.github/workflows/deploy-staging.yml`). Production deploys only when `deploy-prod.yml` is run by hand on a `vMAJOR.MINOR.PATCH` tag; starting that run is the approval.
 
 1. Run the post-deployment checks on staging against the `main` commit you want to release.
 2. In a PR: bump `version:` in `pubspec.yaml` (`X.Y.Z+N`, N increases every release) and rename `## [Unreleased]` in `CHANGELOG.md` to `## [X.Y.Z] - YYYY-MM-DD`. MAJOR = breaks older clients or needs a migration/special deploy order, MINOR = features, PATCH = fixes. Merge it and wait for the staging deploy of the merge commit to succeed.
-3. `git switch main && git pull && tool/release-check.sh vX.Y.Z`, then `git tag -a vX.Y.Z -m "vX.Y.Z" && git push origin vX.Y.Z`.
-4. `deploy-prod.yml` checks the tag (format, `pubspec.yaml`, changelog entry, commit on `main`, successful staging deploy of that exact commit), reruns CI, then waits for approval on the `production` environment. Approve it in the Actions run.
+3. `git switch main && git pull && tool/release-check.sh vX.Y.Z`, then `git tag -a vX.Y.Z -m "vX.Y.Z" && git push origin vX.Y.Z`. Pushing the tag deploys nothing.
+4. In GitHub → Actions → "Deploy production" → "Run workflow", set "Use workflow from" to the tag (not `main`) and run it. It checks the tag (format, `pubspec.yaml`, changelog entry, commit on `main`, successful staging deploy of that exact commit), reruns CI, then deploys.
 5. After the deploy, run any one-off scripts named in the changelog's deploy notes, then the post-deployment checks on production. The workflow publishes a GitHub Release from the changelog section.
 
-A release whose changelog says it needs a different deploy order is deployed to prod by hand first, in that order. Then push the tag as usual: the workflow redeploys the same commit (a no-op in effect) and creates the Release.
+A release whose changelog says it needs a different deploy order is deployed to prod by hand first, in that order. Then tag and run the workflow as usual: it redeploys the same commit (a no-op in effect) and creates the Release.
 
 **Hotfix:** branch from `main`, fix, PR, merge, then release as a PATCH. If `main` holds unreleased work that must not ship, hold the release until it is ready rather than tagging a commit off `main`; the guards reject that.
 
 ### One-time GitHub and Google Cloud setup
 
-- **GitHub environments:** `staging` (no protection) and `production` (required reviewers: the release approvers, with "Prevent self-review" once there is more than one; deployment branches/tags limited to `v*`). On each, set variables `GCP_WIF_PROVIDER` and `GCP_DEPLOY_SERVICE_ACCOUNT`.
-- **Branch protection on `main`:** require a pull request and the `flutter` and `functions` status checks. Private repositories need a paid GitHub plan for branch protection and environment reviewers.
-- **Deploy identity per Firebase project:** a `github-deployer` service account with Firebase Hosting Admin, Cloud Functions Admin, Firebase Rules Admin, Cloud Datastore Index Admin, Cloud Scheduler Admin and Service Account User on the Functions runtime account, reached through a Workload Identity Federation provider that trusts only this repository (and, for prod, only the `production` environment). No key files.
+The repository is private on a free GitHub plan, which has no branch protection and no environments. The deploy guards therefore live in the workflows and in Google Cloud rather than in GitHub settings.
+
+- **Repository variables** (Settings → Secrets and variables → Actions → Variables): `STAGING_GCP_WIF_PROVIDER`, `STAGING_GCP_DEPLOY_SERVICE_ACCOUNT`, `PROD_GCP_WIF_PROVIDER`, `PROD_GCP_DEPLOY_SERVICE_ACCOUNT`. These are identifiers, not secrets.
+- **`main` is unprotected:** the "PRs that pass CI" rule is kept by convention and the pre-push hook. Upgrading the plan (or making the repo public) would allow requiring a pull request and the `flutter` and `functions` checks.
+- **Deploy identity per Firebase project:** a `github-deployer` service account with Firebase Hosting Admin, Cloud Functions Admin, Firebase Rules Admin, Cloud Datastore Index Admin, Cloud Scheduler Admin and Service Account User on the Functions runtime account, reached through a Workload Identity Federation provider whose attribute condition trusts only this repository's deploy runs. No key files. The OIDC `workflow_ref` claim names the calling workflow and ref, so:
+  - staging: `assertion.repository == 'jerwkw/kingdom' && assertion.ref == 'refs/heads/main'`
+  - prod: `assertion.repository == 'jerwkw/kingdom' && assertion.event_name == 'workflow_dispatch' && assertion.workflow_ref.startsWith('jerwkw/kingdom/.github/workflows/deploy-prod.yml@refs/tags/v')`
 - **Functions image cleanup:** run `npx --prefix functions firebase --project prod functions:artifacts:setpolicy` once; without a policy the non-interactive functions deploy fails after deploying. Staging already has one.
 
 ## Post-deployment checks

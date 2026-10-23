@@ -1,10 +1,11 @@
 name: Deploy production
 
-# Pushing a vX.Y.Z tag deploys that commit to prod after the guards pass, CI is
-# green and a reviewer approves the `production` environment.
+# Run by hand from the Actions tab with "Use workflow from" set to a vX.Y.Z tag;
+# starting the run is the approval. It deploys that tag's commit to prod after
+# the guards pass and CI is green. (Environment approvals need a paid plan on a
+# private repo, so there is no separate approval step.)
 on:
-  push:
-    tags: ['v*']
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -20,6 +21,11 @@ jobs:
       contents: read
       actions: read
     steps:
+      - name: Run from a release tag
+        if: github.ref_type != 'tag'
+        run: |
+          echo "::error::Pick a vX.Y.Z tag under \"Use workflow from\", not a branch."
+          exit 1
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -50,7 +56,6 @@ jobs:
       id-token: write
     with:
       alias: prod
-      environment: production
 
   release:
     needs: deploy

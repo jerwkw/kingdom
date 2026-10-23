@@ -13,7 +13,7 @@ First tagged release. Production currently runs an untagged build from 2026-07-2
 - Guild achievement history and fund contribution ledger.
 - Goal editing, archive/restore, deletion and sharing to the bulletin.
 - Bulletin pagination and editing/deleting your own posts.
-- Staging environment (`church-app-staging-f8a55`) and tag-based production releases.
+- Staging environment (`church-app-staging-f8a55`) and tag-based production releases, deployed by a manually run workflow.
 
 ### Changed
 - Goal checkbox shows pending, failed and confirmed states.
@@ -21,6 +21,9 @@ First tagged release. Production currently runs an untagged build from 2026-07-2
 - Neighbourhood statistics use each member's goal schedule instead of a fixed target.
 - Equipping items and creating bulletin posts now go through the server.
 - Business day is UTC everywhere.
+
+### Fixed
+- Tasks tab no longer renders grey before today's reflection is completed.
 
 ### Removed
 - The member-role system.
