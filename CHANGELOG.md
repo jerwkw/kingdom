@@ -1,6 +1,6 @@
 # Changelog
 
-Versions follow `vMAJOR.MINOR.PATCH`: MAJOR for releases that break older clients or need a data migration or special deploy order, MINOR for features, PATCH for fixes. The version must match `pubspec.yaml`. See "Releasing" in `FIREBASE_DEPLOYMENT_GUIDE.md` (on the `documentation` branch).
+Versions follow `vMAJOR.MINOR.PATCH`: MAJOR for releases that break older clients or need a data migration or special deploy order, MINOR for features, PATCH for fixes. The version must match `pubspec.yaml`. See "Releasing" in `FIREBASE_DEPLOYMENT_GUIDE.md`.
 
 ## [Unreleased]
 

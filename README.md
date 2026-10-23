@@ -56,7 +56,7 @@ flutter build web
 npx --prefix functions firebase deploy
 ```
 
-See `FIREBASE_DEPLOYMENT_GUIDE.md` (on the `documentation` branch) for rollout order and post-deployment checks.
+See `FIREBASE_DEPLOYMENT_GUIDE.md` for rollout order and post-deployment checks.
 
 ## Security model
 

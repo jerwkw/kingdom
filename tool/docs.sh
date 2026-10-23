@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Prints the path of the worktree that has the `documentation` branch checked
-# out (docs/TODO.md, docs/ARCHIVE.md, FIREBASE_DEPLOYMENT_GUIDE.md), creating it
+# out (docs/TODO.md and docs/ARCHIVE.md: shared project status), creating it
 # as <main checkout>-docs if no worktree has it yet. Code worktrees never switch
 # to that branch; they commit to it with git -C "$(tool/docs.sh)".
 set -euo pipefail
