@@ -110,3 +110,9 @@ All code-side P0 items, the user-feedback follow-ups, most of P1 and part of P2 
 ### P2 — Simplify the codebase
 
 - Split `functions/index.js` into route modules, validation helpers, domain services, and transaction helpers.
+
+## 2026-10-23 staging and release process
+
+- Created staging Firebase project `church-app-staging-f8a55` (Firestore `asia-southeast1`, Google sign-in, Blaze, image cleanup policy) and deployed the release there.
+- `.firebaserc` aliases `staging` (default) / `prod`; web `FirebaseOptions` selected by `--dart-define=FIREBASE_ENV` in `lib/config/firebase_options.dart`; CORS default origins follow `GCLOUD_PROJECT`.
+- P2 "Add a release checklist and versioning/changelog process" — tag-based releases: `CHANGELOG.md`, `pubspec.yaml` version must match `vX.Y.Z`, `tool/release-check.sh` guards, `tool/deploy.sh` ordered deploy, workflows `ci.yml` (PRs), `deploy-staging.yml` (push to `main`), `deploy-prod.yml` (tags, staging-success guard, `production` approval, GitHub Release). Documented under "Releasing" in `FIREBASE_DEPLOYMENT_GUIDE.md`.

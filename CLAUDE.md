@@ -33,7 +33,7 @@ node --test --test-name-pattern "<name>" test/domain.test.js   # single backend 
 node scripts/<name>.js [--apply]                    # one-off Admin SDK migrations; dry run unless --apply
 ```
 
-Deploy (see `FIREBASE_DEPLOYMENT_GUIDE.md` for order and post-deploy checks): rules/indexes → functions → hosting, via `npx --prefix functions firebase deploy --only <target>`. Firebase CLI is a devDependency of `functions/`, hence `--prefix functions`. `.firebaserc` aliases: `staging` (default, `church-app-staging-f8a55`) and `prod` (`church-app-f8a55`); build web with `--dart-define=FIREBASE_ENV=staging` for staging.
+Deploy (see `FIREBASE_DEPLOYMENT_GUIDE.md` for order and post-deploy checks): rules/indexes → functions → hosting, via `npx --prefix functions firebase deploy --only <target>`. Firebase CLI is a devDependency of `functions/`, hence `--prefix functions`. `.firebaserc` aliases: `staging` (default, `church-app-staging-f8a55`) and `prod` (`church-app-f8a55`); build web with `--dart-define=FIREBASE_ENV=staging` for staging. `tool/deploy.sh <alias>` deploys a built `build/web` in release order. CI: PRs run `ci.yml`; pushes to `main` deploy staging; `vX.Y.Z` tags deploy prod after `tool/release-check.sh` guards and approval ("Releasing" in the guide; `CHANGELOG.md` and `pubspec.yaml` version must match the tag).
 
 ## Architecture
 

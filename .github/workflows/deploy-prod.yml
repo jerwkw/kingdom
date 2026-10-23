@@ -1,0 +1,67 @@
+name: Deploy production
+
+# Pushing a vX.Y.Z tag deploys that commit to prod after the guards pass, CI is
+# green and a reviewer approves the `production` environment.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Tag matches pubspec and CHANGELOG, commit is on main
+        run: tool/release-check.sh "$GITHUB_REF_NAME"
+        env:
+          MAIN_REF: origin/main
+      - name: Staging deploy succeeded for this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          commit="$(git rev-parse HEAD)"
+          runs="$(gh run list --workflow deploy-staging.yml --commit "$commit" --status success --json databaseId --jq length)"
+          if [ "$runs" -eq 0 ]; then
+            echo "::error::No successful staging deploy for $commit; merge to main and let deploy-staging finish first."
+            exit 1
+          fi
+
+  ci:
+    needs: guard
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    needs: ci
+    uses: ./.github/workflows/deploy.yml
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      alias: prod
+      environment: production
+
+  release:
+    needs: deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create GitHub Release from CHANGELOG
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tool/release-notes.sh "${GITHUB_REF_NAME#v}" > release-notes.md
+          gh release create "$GITHUB_REF_NAME" --verify-tag --title "$GITHUB_REF_NAME" --notes-file release-notes.md

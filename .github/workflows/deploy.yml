@@ -1,0 +1,53 @@
+name: Deploy
+
+# Reusable: builds the web app for one Firebase alias and runs tool/deploy.sh.
+# Credentials come from Workload Identity Federation; GCP_WIF_PROVIDER and
+# GCP_DEPLOY_SERVICE_ACCOUNT are variables on the matching GitHub environment.
+on:
+  workflow_call:
+    inputs:
+      alias:
+        description: Firebase alias from .firebaserc (staging or prod)
+        required: true
+        type: string
+      environment:
+        description: GitHub environment holding the credentials and protection rules
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.6
+          channel: stable
+          cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+      - run: npm ci
+        working-directory: functions
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+      - run: flutter pub get
+      - name: Build web
+        env:
+          ALIAS: ${{ inputs.alias }}
+        run: |
+          if [ "$ALIAS" = staging ]; then
+            flutter build web --dart-define=FIREBASE_ENV=staging
+          else
+            flutter build web
+          fi
+      - run: tool/deploy.sh "${{ inputs.alias }}"

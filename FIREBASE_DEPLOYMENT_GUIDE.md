@@ -52,7 +52,7 @@ npm run test:integration
 cd ..
 ```
 
-Do not deploy if a command fails. Rule and integration tests require the emulators (Java) and may download emulator artifacts on first use. The same checks run in `.github/workflows/ci.yml`; mark both CI jobs as required status checks in the GitHub branch protection settings for `main`.
+Do not deploy if a command fails. Rule and integration tests require the emulators (Java) and may download emulator artifacts on first use. The same checks run in `.github/workflows/ci.yml` on every pull request and before every deploy.
 
 ## Configuration
 
@@ -61,13 +61,14 @@ Do not deploy if a command fails. Rule and integration tests require the emulato
 
 ## Deployment order
 
+Normally CI deploys (see "Releasing"). To deploy by hand, build for the target and run `tool/deploy.sh`, which deploys indexes → functions → hosting → rules and refuses a `build/web` built for the other project:
+
 ```bash
-npx --prefix functions firebase deploy --only firestore:rules,firestore:indexes
-npx --prefix functions firebase deploy --only functions
-npx --prefix functions firebase deploy --only hosting
+flutter build web --dart-define=FIREBASE_ENV=staging && tool/deploy.sh staging
+flutter build web && tool/deploy.sh prod
 ```
 
-Hosting serves `build/web` and rewrites `/api/**` to the authenticated `api` function.
+Rules go last because the new client works against the old rules, while old clients may break under new ones. Hosting serves `build/web` and rewrites `/api/**` to the authenticated `api` function.
 
 ### Release that removes roles and adds notifications/achievements
 
@@ -88,6 +89,27 @@ Older clients write `role`, create bulletin posts directly and equip items by ed
    ```
 
    Both are idempotent. Backfilled achievements have no unlock date and are shown as "date unknown".
+
+## Releasing
+
+Work lands on `main` only through pull requests that pass CI (`flutter` and `functions` jobs). Every push to `main` deploys to staging (`.github/workflows/deploy-staging.yml`). Production deploys only from a `vMAJOR.MINOR.PATCH` tag (`deploy-prod.yml`).
+
+1. Run the post-deployment checks on staging against the `main` commit you want to release.
+2. In a PR: bump `version:` in `pubspec.yaml` (`X.Y.Z+N`, N increases every release) and rename `## [Unreleased]` in `CHANGELOG.md` to `## [X.Y.Z] - YYYY-MM-DD`. MAJOR = breaks older clients or needs a migration/special deploy order, MINOR = features, PATCH = fixes. Merge it and wait for the staging deploy of the merge commit to succeed.
+3. `git switch main && git pull && tool/release-check.sh vX.Y.Z`, then `git tag -a vX.Y.Z -m "vX.Y.Z" && git push origin vX.Y.Z`.
+4. `deploy-prod.yml` checks the tag (format, `pubspec.yaml`, changelog entry, commit on `main`, successful staging deploy of that exact commit), reruns CI, then waits for approval on the `production` environment. Approve it in the Actions run.
+5. After the deploy, run any one-off scripts named in the changelog's deploy notes, then the post-deployment checks on production. The workflow publishes a GitHub Release from the changelog section.
+
+A release whose changelog says it needs a different deploy order is deployed to prod by hand first, in that order. Then push the tag as usual: the workflow redeploys the same commit (a no-op in effect) and creates the Release.
+
+**Hotfix:** branch from `main`, fix, PR, merge, then release as a PATCH. If `main` holds unreleased work that must not ship, hold the release until it is ready rather than tagging a commit off `main`; the guards reject that.
+
+### One-time GitHub and Google Cloud setup
+
+- **GitHub environments:** `staging` (no protection) and `production` (required reviewers: the release approvers, with "Prevent self-review" once there is more than one; deployment branches/tags limited to `v*`). On each, set variables `GCP_WIF_PROVIDER` and `GCP_DEPLOY_SERVICE_ACCOUNT`.
+- **Branch protection on `main`:** require a pull request and the `flutter` and `functions` status checks. Private repositories need a paid GitHub plan for branch protection and environment reviewers.
+- **Deploy identity per Firebase project:** a `github-deployer` service account with Firebase Hosting Admin, Cloud Functions Admin, Firebase Rules Admin, Cloud Datastore Index Admin, Cloud Scheduler Admin and Service Account User on the Functions runtime account, reached through a Workload Identity Federation provider that trusts only this repository (and, for prod, only the `production` environment). No key files.
+- **Functions image cleanup:** run `npx --prefix functions firebase --project prod functions:artifacts:setpolicy` once; without a policy the non-interactive functions deploy fails after deploying. Staging already has one.
 
 ## Post-deployment checks
 

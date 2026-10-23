@@ -4,7 +4,7 @@ Last reviewed: 2026-10-21. Closed items and their details live in [ARCHIVE.md](A
 
 ## Status
 
-- **2026-10-21 pass:** all code-side P0, the user-feedback follow-ups, most of P1 and part of P2 done (route split, transactional membership, error codes, rate limits, fund ledger, achievements, notifications, server-side equip, role removal, CI). Not yet committed or deployed.
+- **2026-10-21 pass:** all code-side P0, the user-feedback follow-ups, most of P1 and part of P2 done (route split, transactional membership, error codes, rate limits, fund ledger, achievements, notifications, server-side equip, role removal, CI). Committed; deployed to staging only.
 - **Deploy order for this release:** indexes → functions → hosting → rules, then `functions/scripts/remove-legacy-role.js` and `backfill-achievements.js` (both only run against the emulator so far). Older clients break under the new rules. See [FIREBASE_DEPLOYMENT_GUIDE.md](../FIREBASE_DEPLOYMENT_GUIDE.md).
 
 ### Decisions to confirm
@@ -37,7 +37,7 @@ Done: staging project `church-app-staging-f8a55` created with a web app; `.fireb
 
 Done: race-safe membership transactions, emulator integration tests for every route, string limits, rate limits, error codes, CORS.
 
-- [ ] Make `npm run test:rules` and the Functions integration suite required checks (GitHub branch-protection setting; `.github/workflows/ci.yml` already runs them).
+- [ ] Create the GitHub repo and push; do the "One-time GitHub and Google Cloud setup" in the deployment guide (environments, branch protection requiring PRs + `flutter`/`functions` checks, Workload Identity Federation deployers, prod cleanup policy). Workflows are written and linted but have never run on GitHub.
 
 ## User-feedback acceptance checks
 
@@ -62,10 +62,9 @@ Done: schedule-based stats targets, `memberActivity` aggregates, fund ledger, go
 
 ## P2 — engineering quality and operations
 
-Done: CI on Node 22 for all suites, unit/parity tests, structured logging, `functions/index.js` route split.
+Done: CI on Node 22 for all suites, unit/parity tests, structured logging, `functions/index.js` route split, tag-based release process (`CHANGELOG.md`, `tool/release-check.sh`, deploy workflows; see "Releasing" in the guide).
 
 - [ ] Add browser smoke tests and an accessibility pass (keyboard flow, semantic labels, contrast, text scaling, reduced motion).
-- [ ] Add a release checklist and versioning/changelog process.
 - [ ] Define Firestore backup/export, restore, retention, and incident-response procedures.
 - [ ] Document who may deploy, inspect production data, manage Firebase keys, and access logs.
 - [ ] Add monitoring for Function failures, unusual reward/purchase rates, and Firestore quota/cost growth.

@@ -1,9 +1,13 @@
 name: CI
 
+# Pull requests run this directly; pushes to main and release tags run it via
+# deploy-staging.yml / deploy-prod.yml before deploying.
 on:
-  push:
-    branches: [main]
   pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
 
 jobs:
   flutter:
@@ -12,6 +16,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
+          flutter-version: 3.44.6
           channel: stable
           cache: true
       - run: flutter pub get

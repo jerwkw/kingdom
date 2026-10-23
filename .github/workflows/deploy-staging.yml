@@ -1,0 +1,27 @@
+name: Deploy staging
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# One staging deploy at a time; a newer push replaces any queued run.
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    needs: ci
+    uses: ./.github/workflows/deploy.yml
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      alias: staging
+      environment: staging
