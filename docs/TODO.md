@@ -25,8 +25,9 @@ Last reviewed: 2026-10-21. Closed items and their details live in [ARCHIVE.md](A
 
 ### Deploy and verify the Firebase environment
 
-- [ ] Confirm the intended Firebase project is selected and billing is enabled for Cloud Functions and scheduled jobs.
-- [ ] Deploy Firestore rules, indexes, Functions, and Hosting to a non-production Firebase project first.
+Done: staging project `church-app-staging-f8a55` created with a web app; `.firebaserc` aliases (`staging` default, `prod`); web config chosen by `--dart-define=FIREBASE_ENV`; CORS derived from the deploying project. Production (`church-app-f8a55`) still runs the pre-pass build from 2026-07-28.
+
+- Staging console setup done and release deployed to staging on 2026-10-23 (indexes → functions → hosting → rules); new routes answer 401 unauthenticated at https://church-app-staging-f8a55.web.app. Google OAuth consent screen is in Testing — add testers under Google Auth Platform → Audience.
 - [ ] Run the two-account checks in [FIREBASE_DEPLOYMENT_GUIDE.md](../FIREBASE_DEPLOYMENT_GUIDE.md) against that environment.
 - [ ] Confirm Google sign-in works from the final Hosting domain and that all authorized domains are configured.
 - [ ] Configure Firebase budget alerts, Cloud Functions logs/alerts, and least-privilege Firebase project access.

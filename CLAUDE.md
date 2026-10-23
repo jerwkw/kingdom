@@ -33,7 +33,7 @@ node --test --test-name-pattern "<name>" test/domain.test.js   # single backend 
 node scripts/<name>.js [--apply]                    # one-off Admin SDK migrations; dry run unless --apply
 ```
 
-Deploy (see `FIREBASE_DEPLOYMENT_GUIDE.md` for order and post-deploy checks): rules/indexes → functions → hosting, via `npx --prefix functions firebase deploy --only <target>`. Firebase CLI is a devDependency of `functions/`, hence `--prefix functions`.
+Deploy (see `FIREBASE_DEPLOYMENT_GUIDE.md` for order and post-deploy checks): rules/indexes → functions → hosting, via `npx --prefix functions firebase deploy --only <target>`. Firebase CLI is a devDependency of `functions/`, hence `--prefix functions`. `.firebaserc` aliases: `staging` (default, `church-app-staging-f8a55`) and `prod` (`church-app-f8a55`); build web with `--dart-define=FIREBASE_ENV=staging` for staging.
 
 ## Architecture
 
@@ -50,7 +50,7 @@ Deploy (see `FIREBASE_DEPLOYMENT_GUIDE.md` for order and post-deploy checks): ru
 **Flutter client (`lib/`)**: Riverpod throughout.
 - `providers/` hold Firestore `StreamProvider`s for live reads and `StateNotifier`-style controllers that call the Functions API through `apiClientProvider` (`services/api_client.dart`, which attaches the ID token and throws `ApiException(code, message)`). Base URL comes from `backendBaseUrlProvider` in `auth_provider.dart`: `/api` on web, `--dart-define=BACKEND_BASE_URL` otherwise. Balances, funds and memberships are live streams, so actions don't need to invalidate them; only the request/response `buildingMemberStatsProvider` is refreshed.
 - `userGoalsProvider` combines independent goals and completions streams; per-goal pending/failed/confirmed state lives in `goalCompletionStatusProvider`.
-- `main.dart` initializes Firebase (web options inline), optionally connects emulators, and routes between `OnboardingScreen` and `MainShell` based on auth + profile state. `MainShell` hosts the tabs in `screens/`; the selected tab is `shellTabProvider` (so notifications can deep-link). Each tab's app bar carries `NotificationBell`.
+- `main.dart` initializes Firebase (web options per environment from `config/firebase_options.dart`), optionally connects emulators, and routes between `OnboardingScreen` and `MainShell` based on auth + profile state. `MainShell` hosts the tabs in `screens/`; the selected tab is `shellTabProvider` (so notifications can deep-link). Each tab's app bar carries `NotificationBell`.
 - `config/` holds static catalogs: avatar parts, the avatar anchor/geometry system used by `widgets/avatar_renderer.dart`, the store catalog, achievement display copy and `TextLimits`. The member-role system was removed; don't reintroduce `role`.
 
 **Duplicated definitions that must stay in sync** (each enforced by a test that reads the authoritative file):
@@ -62,4 +62,4 @@ Deploy (see `FIREBASE_DEPLOYMENT_GUIDE.md` for order and post-deploy checks): ru
 ## Notes
 
 - Hosting sets no-cache headers on html/js/json and SPA-rewrites everything else to `index.html`.
-- Never commit service-account credentials, `.env` files, signing keys, or platform Firebase secret files (the web `FirebaseOptions` in `main.dart` are public client config).
+- Never commit service-account credentials, `.env` files, signing keys, or platform Firebase secret files (the web `FirebaseOptions` in `lib/config/firebase_options.dart` are public client config).

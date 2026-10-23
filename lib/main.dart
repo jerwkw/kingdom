@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'config/firebase_options.dart';
 import 'providers/auth_provider.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/main_shell.dart';
@@ -14,16 +15,7 @@ void main() async {
   try {
     if (Firebase.apps.isEmpty) {
       if (kIsWeb) {
-        await Firebase.initializeApp(
-          options: const FirebaseOptions(
-            apiKey: "AIzaSyD1egObGqHZAge1XmiOIjkqtkgz1ClSPi4",
-            appId: "1:3839328656:web:59dd7194795f24c222f315",
-            messagingSenderId: "3839328656",
-            projectId: "church-app-f8a55",
-            authDomain: "church-app-f8a55.firebaseapp.com",
-            storageBucket: "church-app-f8a55.firebasestorage.app",
-          ),
-        );
+        await Firebase.initializeApp(options: webFirebaseOptions);
       } else {
         await Firebase.initializeApp();
       }

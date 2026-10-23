@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "church-app-staging-f8a55",
+    "staging": "church-app-staging-f8a55",
+    "prod": "church-app-f8a55"
+  }
+}

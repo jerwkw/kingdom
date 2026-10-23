@@ -18,10 +18,26 @@ cd functions
 npm install
 cd ..
 npx --prefix functions firebase login
-npx --prefix functions firebase use <project-id>
+npx --prefix functions firebase use staging    # or: prod
 ```
 
-Confirm the active project before every production deployment.
+## Environments
+
+| Alias | Project ID | URL | Web build |
+| --- | --- | --- | --- |
+| `staging` (default) | `church-app-staging-f8a55` | https://church-app-staging-f8a55.web.app | `flutter build web --dart-define=FIREBASE_ENV=staging` |
+| `prod` | `church-app-f8a55` | https://church-app-f8a55.web.app | `flutter build web` |
+
+`.firebaserc` defaults to staging, so an unqualified deploy never reaches production. Deploy every release to staging, run the post-deployment checks there, then repeat with `--project prod`. The web build picks its Firebase config from `FIREBASE_ENV` (`lib/config/firebase_options.dart`), so always rebuild `build/web` with the matching flag before deploying Hosting — a staging deploy of a production build talks to the production database.
+
+Confirm the active project (`firebase use`) before every deployment.
+
+### One-time staging console setup
+
+1. Upgrade `church-app-staging-f8a55` to the Blaze plan (Functions and the scheduler need it) and add a small budget alert.
+2. Enable the Cloud Firestore API, then create the database in `asia-southeast1` to match production: `npx --prefix functions firebase --project staging firestore:databases:create "(default)" --location asia-southeast1`.
+3. Authentication → Get started → enable the Google provider. The `*.web.app` / `*.firebaseapp.com` domains and `localhost` are authorized by default.
+4. Grant access only to the people who run deploys and acceptance checks.
 
 ## Verify before deployment
 
@@ -40,7 +56,7 @@ Do not deploy if a command fails. Rule and integration tests require the emulato
 
 ## Configuration
 
-- **CORS**: the API allows the project's `*.web.app` / `*.firebaseapp.com` origins by default (see `functions/index.js`). For a different project or custom domain, set a comma-separated `ALLOWED_ORIGINS` in `functions/.env.<project-id>` (not committed if it contains anything private).
+- **CORS**: the API allows the deploying project's `*.web.app` / `*.firebaseapp.com` origins by default, derived from `GCLOUD_PROJECT` (see `functions/index.js`). For a different project or custom domain, set a comma-separated `ALLOWED_ORIGINS` in `functions/.env.<project-id>` (not committed if it contains anything private).
 - **Rate-limit TTL**: `firestore.indexes.json` declares a TTL policy on `rateLimits.expiresAt`; deploying indexes enables it. Confirm it in the console under Firestore → TTL.
 
 ## Deployment order

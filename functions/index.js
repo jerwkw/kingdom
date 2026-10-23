@@ -9,9 +9,11 @@ const store = require('./lib/routes/store');
 const bulletin = require('./lib/routes/bulletin');
 
 // Production traffic arrives same-origin through the Hosting /api rewrite, so
-// CORS only matters for direct invocation. Override with a comma-separated
-// ALLOWED_ORIGINS in functions/.env.<project>.
-const DEFAULT_ORIGINS = ['https://church-app-f8a55.web.app', 'https://church-app-f8a55.firebaseapp.com'];
+// CORS only matters for direct invocation. Defaults to the deploying project's
+// Hosting domains; override with a comma-separated ALLOWED_ORIGINS in
+// functions/.env.<project>.
+const projectId = process.env.GCLOUD_PROJECT || 'church-app-f8a55';
+const DEFAULT_ORIGINS = [`https://${projectId}.web.app`, `https://${projectId}.firebaseapp.com`];
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || DEFAULT_ORIGINS.join(','))
   .split(',').map((o) => o.trim()).filter(Boolean);
 const isEmulator = process.env.FUNCTIONS_EMULATOR === 'true';
