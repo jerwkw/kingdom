@@ -40,7 +40,7 @@ Done: staging project `church-app-staging-f8a55` created with a web app; `.fireb
 Done: race-safe membership transactions, emulator integration tests for every route, string limits, rate limits, error codes, CORS.
 
 - Done 2026-10-23 (#1): prod deploys by manually running `deploy-prod.yml` on a tag.
-- [ ] **(Jeremy) Set up automatic deploys.** Repo is on GitHub (`jerwkw/kingdom`, private, free plan) but every `main` push fails at the Google Cloud login step, so nothing deploys automatically yet. Follow "One-time GitHub and Google Cloud setup" in `FIREBASE_DEPLOYMENT_GUIDE.md`; ask Claude for a step-by-step `gcloud` walkthrough.
+- [ ] **(jerwkw) Set up automatic deploys.** Repo is on GitHub (`jerwkw/kingdom`, private, free plan) but every `main` push fails at the Google Cloud login step, so nothing deploys automatically yet. Follow "One-time GitHub and Google Cloud setup" in `FIREBASE_DEPLOYMENT_GUIDE.md`; ask Claude for a step-by-step `gcloud` walkthrough.
   1. In each project, create a `github-deployer` service account with the roles listed in the guide.
   2. Create a Workload Identity Federation pool and provider per project, with the attribute conditions in the guide (staging: `main` only; prod: hand-run `deploy-prod.yml` on `v*` tags).
   3. Add repository variables `STAGING_GCP_WIF_PROVIDER`, `STAGING_GCP_DEPLOY_SERVICE_ACCOUNT`, `PROD_GCP_WIF_PROVIDER`, `PROD_GCP_DEPLOY_SERVICE_ACCOUNT`.
