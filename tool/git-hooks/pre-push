@@ -15,4 +15,9 @@ while read -r local_ref _ _ _; do
 done
 
 [[ "$branch_push" == 1 ]] || exit 0
-exec "$(git rev-parse --show-toplevel)/tool/check.sh"
+root="$(git rev-parse --show-toplevel)"
+# Git exports GIT_DIR etc. to hooks (absolute in a worktree); Flutter runs git
+# in its own SDK checkout and would read this repo instead, so clear them.
+unset $(git rev-parse --local-env-vars)
+cd "$root"
+exec tool/check.sh
