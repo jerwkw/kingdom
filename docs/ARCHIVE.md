@@ -120,3 +120,9 @@ All code-side P0 items, the user-feedback follow-ups, most of P1 and part of P2 
 
 - `ci/release-workflows`: tag-based releases (`CHANGELOG.md`, `tool/release-check.sh`, staging/prod deploy workflows, "Releasing" in the deployment guide); local CI parity (`tool/check.sh`, `.nvmrc`, pre-push hook, agent rules in `CLAUDE.md`); docs split (status on the `documentation` branch via `tool/docs.sh`, code docs with the code, PR template).
 - `fix/challenge-completion-read`: the Tasks tab rendered grey on staging because `completions/{uid}_challenge_{today}` doesn't exist until the reflection is done and the read rule (`resource.data.userId == uid`) denied it; `.value` on the errored provider then threw during build. Rules now allow reading a missing completion whose id starts with the caller's uid (rules test added); the client uses `.valueOrNull`. Needs a rules + hosting deploy to reach staging.
+
+## 2026-10-23 manual prod deploy (#1)
+
+- Repo `github.com/jerwkw/kingdom` is private on GitHub Free (no environments, no branch protection). `deploy-prod.yml` now runs only via workflow_dispatch on a `vX.Y.Z` tag; starting the run is the approval. Deploy credentials are repository variables `STAGING_`/`PROD_GCP_WIF_PROVIDER` and `..._GCP_DEPLOY_SERVICE_ACCOUNT`; the deployment guide gives WIF attribute conditions restricting prod to those runs.
+- Pre-push hook clears git's hook environment (an absolute `GIT_DIR` in worktrees broke Flutter's version lookup).
+- Action version bumps (#2) were merged into the PR #1 branch by mistake and re-opened against `main` as #3.
