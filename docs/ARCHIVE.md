@@ -115,3 +115,8 @@ All code-side P0 items, the user-feedback follow-ups, most of P1 and part of P2 
 
 - Created staging Firebase project `church-app-staging-f8a55` (Firestore `asia-southeast1`, Google sign-in, Blaze, image cleanup policy) and deployed the release there.
 - `.firebaserc` aliases `staging` (default) / `prod`; web `FirebaseOptions` selected by `--dart-define=FIREBASE_ENV` in `lib/config/firebase_options.dart`; CORS default origins follow `GCLOUD_PROJECT`.
+
+## 2026-10-23 merged to main (local; GitHub remote added the same day)
+
+- `ci/release-workflows`: tag-based releases (`CHANGELOG.md`, `tool/release-check.sh`, staging/prod deploy workflows, "Releasing" in the deployment guide); local CI parity (`tool/check.sh`, `.nvmrc`, pre-push hook, agent rules in `CLAUDE.md`); docs split (status on the `documentation` branch via `tool/docs.sh`, code docs with the code, PR template).
+- `fix/challenge-completion-read`: the Tasks tab rendered grey on staging because `completions/{uid}_challenge_{today}` doesn't exist until the reflection is done and the read rule (`resource.data.userId == uid`) denied it; `.value` on the errored provider then threw during build. Rules now allow reading a missing completion whose id starts with the caller's uid (rules test added); the client uses `.valueOrNull`. Needs a rules + hosting deploy to reach staging.

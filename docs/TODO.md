@@ -29,7 +29,7 @@ Done: staging project `church-app-staging-f8a55` created with a web app; `.fireb
 
 - Staging console setup done and release deployed to staging on 2026-10-23 (indexes → functions → hosting → rules); new routes answer 401 unauthenticated at https://church-app-staging-f8a55.web.app. Google OAuth consent screen is in Testing — add testers under Google Auth Platform → Audience.
 - [ ] Run the two-account checks in `FIREBASE_DEPLOYMENT_GUIDE.md` (code branches) against that environment.
-- [ ] Tasks tab renders grey on staging until today's reflection is done: the completions read rule denied the missing `{uid}_challenge_{today}` doc. _(in progress: fix/challenge-completion-read)_
+- Done 2026-10-23 (merged to `main`, not yet deployed): grey Tasks tab on staging fixed.
 - [ ] Confirm Google sign-in works from the final Hosting domain and that all authorized domains are configured.
 - [ ] Configure Firebase budget alerts, Cloud Functions logs/alerts, and least-privilege Firebase project access.
 - [ ] Enable and enforce Firebase App Check for web before distributing broadly.
@@ -65,9 +65,9 @@ Done: schedule-based stats targets, `memberActivity` aggregates, fund ledger, go
 
 Done: CI on Node 22 for all suites, unit/parity tests, structured logging, `functions/index.js` route split.
 
-- [ ] Add a release checklist and versioning/changelog process. _(in progress: ci/release-workflows)_ — tag-based releases (`CHANGELOG.md`, `tool/release-check.sh`, staging/prod deploy workflows, "Releasing" in the guide).
-- [ ] Local CI parity for work branches and agents. _(in progress: ci/release-workflows)_ — `tool/check.sh`, `.nvmrc`, pre-push hook, agent rules in `CLAUDE.md`.
-- [ ] Docs split for worktrees. _(in progress: ci/release-workflows)_ — status (TODO/ARCHIVE) on the `documentation` branch via `tool/docs.sh`; code docs stay with the code; PR template.
+- Done 2026-10-23: tag-based release process.
+- Done 2026-10-23: local CI parity via `tool/check.sh`.
+- Done 2026-10-23: docs split for worktrees.
 
 - [ ] Add browser smoke tests and an accessibility pass (keyboard flow, semantic labels, contrast, text scaling, reduced motion).
 - [ ] Define Firestore backup/export, restore, retention, and incident-response procedures.
