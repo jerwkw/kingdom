@@ -1,6 +1,6 @@
 # Kingdom implementation TODO
 
-Last reviewed: 2026-10-21. Closed items and their details live in [ARCHIVE.md](ARCHIVE.md).
+Last reviewed: 2026-10-23. Closed items and their details live in [ARCHIVE.md](ARCHIVE.md). This file lives on the docs-only `documentation` branch; from a code worktree, find it with `tool/docs.sh`.
 
 ## Status
 
@@ -62,7 +62,7 @@ Done: schedule-based stats targets, `memberActivity` aggregates, fund ledger, go
 
 ## P2 — engineering quality and operations
 
-Done: CI on Node 22 for all suites, unit/parity tests, structured logging, `functions/index.js` route split, tag-based release process (`CHANGELOG.md`, `tool/release-check.sh`, deploy workflows; see "Releasing" in the guide), local CI parity for agents/branches (`tool/check.sh`, `.nvmrc`, pre-push hook, agent rules in `CLAUDE.md`).
+Done: CI on Node 22 for all suites, unit/parity tests, structured logging, `functions/index.js` route split, tag-based release process (`CHANGELOG.md`, `tool/release-check.sh`, deploy workflows; see "Releasing" in the guide), local CI parity for agents/branches (`tool/check.sh`, `.nvmrc`, pre-push hook, agent rules in `CLAUDE.md`), docs moved to the `documentation` branch/worktree (`tool/docs.sh`).
 
 - [ ] Add browser smoke tests and an accessibility pass (keyboard flow, semantic labels, contrast, text scaling, reduced motion).
 - [ ] Define Firestore backup/export, restore, retention, and incident-response procedures.
