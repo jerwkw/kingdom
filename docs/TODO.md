@@ -33,12 +33,14 @@ Done: staging project `church-app-staging-f8a55` created with a web app; `.fireb
 - [ ] Confirm Google sign-in works from the final Hosting domain and that all authorized domains are configured.
 - [ ] Configure Firebase budget alerts, Cloud Functions logs/alerts, and least-privilege Firebase project access.
 - [ ] Enable and enforce Firebase App Check for web before distributing broadly.
+- [ ] Restrict both web API keys in Google Cloud (HTTP referrers: the Hosting domains + localhost; APIs: those Firebase web uses), then close GitHub's secret-scanning alerts on them as "used in tests"/false positive.
 
 ### CI and API hardening
 
 Done: race-safe membership transactions, emulator integration tests for every route, string limits, rate limits, error codes, CORS.
 
-- [ ] Create the GitHub repo and push; do the "One-time GitHub and Google Cloud setup" in the deployment guide (environments, branch protection requiring PRs + `flutter`/`functions` checks, Workload Identity Federation deployers, prod cleanup policy). Workflows are written and linted but have never run on GitHub.
+- [ ] Prod deploys by manually running `deploy-prod.yml` on a tag (free private repo: no environments or branch protection); pre-push hook fixed for worktrees. _(in progress: ci/manual-prod-deploy)_
+- [ ] Repo pushed to `github.com/jerwkw/kingdom` (private, free plan) on 2026-10-23. Remaining: do the "One-time GitHub and Google Cloud setup" in the deployment guide (environments, branch protection requiring PRs + `flutter`/`functions` checks, Workload Identity Federation deployers, prod cleanup policy). Workflows are written and linted but have never run on GitHub.
 
 ## User-feedback acceptance checks
 
