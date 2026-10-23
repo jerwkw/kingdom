@@ -29,6 +29,7 @@ Done: staging project `church-app-staging-f8a55` created with a web app; `.fireb
 
 - Staging console setup done and release deployed to staging on 2026-10-23 (indexes → functions → hosting → rules); new routes answer 401 unauthenticated at https://church-app-staging-f8a55.web.app. Google OAuth consent screen is in Testing — add testers under Google Auth Platform → Audience.
 - [ ] Run the two-account checks in `FIREBASE_DEPLOYMENT_GUIDE.md` (code branches) against that environment.
+- [ ] Tasks tab renders grey on staging until today's reflection is done: the completions read rule denied the missing `{uid}_challenge_{today}` doc. _(in progress: fix/challenge-completion-read)_
 - [ ] Confirm Google sign-in works from the final Hosting domain and that all authorized domains are configured.
 - [ ] Configure Firebase budget alerts, Cloud Functions logs/alerts, and least-privilege Firebase project access.
 - [ ] Enable and enforce Firebase App Check for web before distributing broadly.
