@@ -82,6 +82,15 @@ test('goals stay private and clients cannot forge completions or streaks', async
   await assertFails(alice.doc('goals/alice-goal').update({ currentStreak: 99 }));
 });
 
+test('users can look up their own missing completions but not anyone else\'s', async () => {
+  const alice = env.authenticatedContext('alice').firestore();
+  const bob = env.authenticatedContext('bob').firestore();
+  await assertSucceeds(alice.doc('completions/alice_challenge_2026-10-23').get());
+  await assertSucceeds(alice.doc('completions/alice-completion').get());
+  await assertFails(bob.doc('completions/alice_challenge_2026-10-23').get());
+  await assertFails(bob.doc('completions/alice-completion').get());
+});
+
 test('goal owners can edit, archive and delete within limits', async () => {
   const alice = env.authenticatedContext('alice').firestore();
   await assertSucceeds(alice.doc('goals/alice-goal').update({ text: 'edited', frequency: 'weekly' }));

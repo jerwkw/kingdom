@@ -92,9 +92,13 @@ service cloud.firestore {
 
     // Completions collection:
     // Only server (Admin SDK) creates/updates completions. Clients cannot write.
-    // Client can only read their own completion records.
+    // Client can only read their own completion records. Ids start with the
+    // owner's uid, so a client may also look up one of its own that doesn't
+    // exist yet (e.g. today's challenge before it is completed).
     match /completions/{completionId} {
-      allow read: if signedIn() && resource.data.userId == request.auth.uid;
+      allow read: if signedIn() && (resource == null
+        ? completionId.matches(request.auth.uid + '_.*')
+        : resource.data.userId == request.auth.uid);
       allow write: if false;
     }
 
