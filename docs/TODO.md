@@ -62,7 +62,7 @@ Done: schedule-based stats targets, `memberActivity` aggregates, fund ledger, go
 
 ## P2 — engineering quality and operations
 
-Done: CI on Node 22 for all suites, unit/parity tests, structured logging, `functions/index.js` route split, tag-based release process (`CHANGELOG.md`, `tool/release-check.sh`, deploy workflows; see "Releasing" in the guide).
+Done: CI on Node 22 for all suites, unit/parity tests, structured logging, `functions/index.js` route split, tag-based release process (`CHANGELOG.md`, `tool/release-check.sh`, deploy workflows; see "Releasing" in the guide), local CI parity for agents/branches (`tool/check.sh`, `.nvmrc`, pre-push hook, agent rules in `CLAUDE.md`).
 
 - [ ] Add browser smoke tests and an accessibility pass (keyboard flow, semantic labels, contrast, text scaling, reduced motion).
 - [ ] Define Firestore backup/export, restore, retention, and incident-response procedures.

@@ -15,7 +15,10 @@ At the start of a session, refer to docs/TODO.md for a summary of past session c
 ## Commands
 
 ```bash
-flutter pub get && (cd functions && npm install)   # setup (Node 22, Java needed for emulators)
+flutter pub get && (cd functions && npm install)   # setup (Node from .nvmrc, Java needed for emulators)
+git config core.hooksPath tool/git-hooks           # once per clone: pre-push runs tool/check.sh
+
+tool/check.sh [flutter|functions] [--no-emulators] # exactly what CI runs; switches Node via nvm
 
 flutter run -d chrome                               # against deployed Firebase project
 npx --prefix functions firebase emulators:start     # local Auth/Firestore/Functions/Hosting
@@ -61,5 +64,6 @@ Deploy (see `FIREBASE_DEPLOYMENT_GUIDE.md` for order and post-deploy checks): ru
 
 ## Notes
 
+- **Agents and work branches:** `main` only changes through PRs that pass CI. Before reporting work as done, run `tool/check.sh` (or the relevant suite) and report its result. Never deploy (`tool/deploy.sh`, `firebase deploy`) — CI deploys staging from `main` and prod from tags. Don't bypass the pre-push hook with `--no-verify`. Emulator suites share fixed ports across worktrees; `tool/check.sh` serialises them with a machine-wide lock, so don't run `npm run test:rules`/`test:integration` directly in parallel.
 - Hosting sets no-cache headers on html/js/json and SPA-rewrites everything else to `index.html`.
 - Never commit service-account credentials, `.env` files, signing keys, or platform Firebase secret files (the web `FirebaseOptions` in `lib/config/firebase_options.dart` are public client config).

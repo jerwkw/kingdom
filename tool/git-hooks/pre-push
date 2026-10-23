@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Runs tool/check.sh before pushing branches. Enable once per clone with
+#   git config core.hooksPath tool/git-hooks
+# Tag-only pushes skip it (the tagged commit already passed on main).
+# Bypass in an emergency with git push --no-verify; CI still blocks the PR.
+set -euo pipefail
+
+branch_push=0
+while read -r local_ref _ _ _; do
+  [[ "$local_ref" == refs/tags/* || "$local_ref" == "(delete)" ]] || branch_push=1
+done
+
+[[ "$branch_push" == 1 ]] || exit 0
+exec "$(git rev-parse --show-toplevel)/tool/check.sh"

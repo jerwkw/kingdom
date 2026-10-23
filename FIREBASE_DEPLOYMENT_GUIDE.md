@@ -42,17 +42,10 @@ Confirm the active project (`firebase use`) before every deployment.
 ## Verify before deployment
 
 ```bash
-flutter analyze
-flutter test
-flutter build web
-cd functions
-npm test
-npm run test:rules
-npm run test:integration
-cd ..
+tool/check.sh
 ```
 
-Do not deploy if a command fails. Rule and integration tests require the emulators (Java) and may download emulator artifacts on first use. The same checks run in `.github/workflows/ci.yml` on every pull request and before every deploy.
+This runs `flutter analyze`, `flutter test`, `flutter build web`, then the Functions domain, rules and integration tests, switching to the Node version in `.nvmrc` via nvm if needed. Do not deploy if it fails. Rule and integration tests require the emulators (Java) and may download emulator artifacts on first use. `.github/workflows/ci.yml` calls the same script on every pull request and before every deploy, and the pre-push hook (`git config core.hooksPath tool/git-hooks`) runs it before branch pushes.
 
 ## Configuration
 
