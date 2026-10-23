@@ -40,7 +40,13 @@ Done: staging project `church-app-staging-f8a55` created with a web app; `.fireb
 Done: race-safe membership transactions, emulator integration tests for every route, string limits, rate limits, error codes, CORS.
 
 - Done 2026-10-23 (#1): prod deploys by manually running `deploy-prod.yml` on a tag.
-- [ ] Repo pushed to `github.com/jerwkw/kingdom` (private, free plan) on 2026-10-23. Remaining: do the "One-time GitHub and Google Cloud setup" in the deployment guide (repository variables, Workload Identity Federation deployers with the attribute conditions given there, prod cleanup policy). Until then the deploy step of every `main` push fails at auth (CI part runs).
+- [ ] **(Jeremy) Set up automatic deploys.** Repo is on GitHub (`jerwkw/kingdom`, private, free plan) but every `main` push fails at the Google Cloud login step, so nothing deploys automatically yet. Follow "One-time GitHub and Google Cloud setup" in `FIREBASE_DEPLOYMENT_GUIDE.md`; ask Claude for a step-by-step `gcloud` walkthrough.
+  1. In each project, create a `github-deployer` service account with the roles listed in the guide.
+  2. Create a Workload Identity Federation pool and provider per project, with the attribute conditions in the guide (staging: `main` only; prod: hand-run `deploy-prod.yml` on `v*` tags).
+  3. Add repository variables `STAGING_GCP_WIF_PROVIDER`, `STAGING_GCP_DEPLOY_SERVICE_ACCOUNT`, `PROD_GCP_WIF_PROVIDER`, `PROD_GCP_DEPLOY_SERVICE_ACCOUNT`.
+  4. Run `npx --prefix functions firebase --project prod functions:artifacts:setpolicy` once.
+  5. Re-run the latest "Deploy staging" run and confirm it goes green.
+  Until then, deploy by hand with `tool/deploy.sh` (see the guide).
 
 ## User-feedback acceptance checks
 
