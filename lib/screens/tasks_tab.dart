@@ -286,7 +286,7 @@ class TasksTab extends ConsumerWidget {
   Widget _buildChallenge(BuildContext context, WidgetRef ref) {
     final challengeAsync = ref.watch(todayDailyChallengeProvider);
     final isChallengeCompleted =
-        ref.watch(isChallengeCompletedTodayProvider).value ?? false;
+        ref.watch(isChallengeCompletedTodayProvider).valueOrNull ?? false;
 
     return challengeAsync.when(
       data: (data) {
